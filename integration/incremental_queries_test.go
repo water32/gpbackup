@@ -263,4 +263,11 @@ var _ = Describe("backup integration tests", func() {
 			})
 		})
 	})
+	FDescribe("getIncrementalPartitionRestoreMetadata", func() {
+		It("gets metadata", func() {
+			partitionMap, err := backup.GetIncrementalPartitionRestoreMetadata()
+			fmt.Println(partitionMap)
+			fmt.Println(err)
+		})
+	})
 })

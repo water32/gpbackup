@@ -44,7 +44,7 @@ var _ = Describe("Options Integration", func() {
 			Expect(expected).To(Equal(resultFQNs))
 		})
 	})
-	Describe("ValidateFilterTables", func() {
+	Describe("ValidateTablesExist", func() {
 		It("validates special chars", func() {
 			createSpecialCharacterTables := `
 -- special chars

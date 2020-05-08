@@ -1,6 +1,9 @@
 package backup
 
 import (
+	"fmt"
+	"path"
+
 	"github.com/greenplum-db/gp-common-go-libs/gplog"
 	"github.com/greenplum-db/gp-common-go-libs/iohelper"
 	"github.com/greenplum-db/gpbackup/history"
@@ -8,7 +11,6 @@ import (
 	"github.com/greenplum-db/gpbackup/toc"
 	"github.com/greenplum-db/gpbackup/utils"
 	"github.com/pkg/errors"
-	"path"
 )
 
 func FilterTablesForIncremental(lastBackupTOC, currentTOC *toc.TOC, tables []Table) []Table {
@@ -123,4 +125,36 @@ func PopulateRestorePlan(changedTables []Table,
 	restorePlan = append(restorePlan, currBackupRestorePlanEntry)
 
 	return restorePlan
+}
+
+// Incremental partitions
+type partition struct {
+	partitionOid          uint32 `db:"paroid"`
+	classOid              uint32 `db:"parchildrelid"`
+	partitionName         string `db:"parname"`
+	isDefault             bool   `db:"parisdefault"`
+	rank                  int    `db:"parruleord"`
+	isRangeStartInclusive bool   `db:"parrangestartincl"`
+	isRangeEndInclusive   bool   `db:"parrangeendincl"`
+	rangeStart            string `db:"parrangestart"`
+	rangeEnd              string `db:"parrangeend"`
+}
+
+func GetIncrementalPartitionRestoreMetadata() (map[uint32]partition, error) {
+	query := fmt.Sprintf(`
+	SELECT * FROM pg_partition_rule;
+	`)
+
+	results := make([]partition, 0)
+	err := connectionPool.Select(&results, query)
+	if err != nil {
+		return nil, err
+	}
+
+	partitionRules := make(map[uint32]partition, 0)
+	for _, v := range results {
+		partitionRules[v.classOid] = v
+	}
+
+	return partitionRules, nil
 }

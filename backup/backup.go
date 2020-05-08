@@ -111,6 +111,14 @@ func DoBackup() {
 			pluginConfig.MustRestoreFile(targetBackupFPInfo.GetTOCFilePath())
 			pluginConfig.MustRestoreFile(targetBackupFPInfo.GetPluginConfigPath())
 		}
+
+		// get a list of the partition tables
+		// get current partition table state from the database
+		// if incremental backup {
+		//    1. get last record partition table state from relevant backups.
+		//	  2. generate the sql that will update the table ddl
+		// }
+
 	}
 
 	gplog.Info("Gathering table state information")
@@ -132,6 +140,7 @@ func DoBackup() {
 
 		isFilteredBackup := !isFullBackup
 		backupPredata(metadataFile, metadataTables, isFilteredBackup)
+		// backup incremental partition sql
 		backupPostdata(metadataFile)
 	}
 
