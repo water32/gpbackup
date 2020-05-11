@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/greenplum-db/gp-common-go-libs/dbconn"
 	"github.com/greenplum-db/gp-common-go-libs/gplog"
 	"github.com/greenplum-db/gp-common-go-libs/iohelper"
 	"github.com/greenplum-db/gpbackup/history"
@@ -129,31 +130,34 @@ func PopulateRestorePlan(changedTables []Table,
 
 // Incremental partitions
 type partition struct {
-	partitionOid          uint32 `db:"paroid"`
-	classOid              uint32 `db:"parchildrelid"`
-	partitionName         string `db:"parname"`
-	isDefault             bool   `db:"parisdefault"`
-	rank                  int    `db:"parruleord"`
-	isRangeStartInclusive bool   `db:"parrangestartincl"`
-	isRangeEndInclusive   bool   `db:"parrangeendincl"`
-	rangeStart            string `db:"parrangestart"`
-	rangeEnd              string `db:"parrangeend"`
+	PartitionOid uint32 `db:"paroid"`
+	ClassOid     uint32 `db:"parchildrelid"`
+	// partitionName         string `db:"parname"`
+	// isDefault             bool   `db:"parisdefault"`
+	// rank                  int    `db:"parruleord"`
+	// isRangeStartInclusive bool   `db:"parrangestartincl"`
+	// isRangeEndInclusive   bool   `db:"parrangeendincl"`
+	// rangeStart            string `db:"parrangestart"`
+	// rangeEnd              string `db:"parrangeend"`
 }
 
-func GetIncrementalPartitionRestoreMetadata() (map[uint32]partition, error) {
+func GetIncrementalPartitionRestoreMetadata(conn *dbconn.DBConn) (map[uint32]partition, error) {
 	query := fmt.Sprintf(`
-	SELECT * FROM pg_partition_rule;
-	`)
+	SELECT p.paroid FROM pg_partition_rule p;`)
 
 	results := make([]partition, 0)
-	err := connectionPool.Select(&results, query)
+	err := conn.Select(&results, query)
 	if err != nil {
 		return nil, err
 	}
 
 	partitionRules := make(map[uint32]partition, 0)
+	fmt.Println("==================================")
+	fmt.Println(len(results))
+	fmt.Println()
 	for _, v := range results {
-		partitionRules[v.classOid] = v
+		fmt.Println(v)
+		// partitionRules[v.classOid] = v
 	}
 
 	return partitionRules, nil

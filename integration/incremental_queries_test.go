@@ -265,9 +265,20 @@ var _ = Describe("backup integration tests", func() {
 	})
 	FDescribe("getIncrementalPartitionRestoreMetadata", func() {
 		It("gets metadata", func() {
-			partitionMap, err := backup.GetIncrementalPartitionRestoreMetadata()
+			testhelper.AssertQueryRuns(connectionPool, `
+CREATE TABLE age (i int) 
+DISTRIBUTED BY (i)
+PARTITION BY RANGE(i)
+( PARTITION a START (int '1') INCLUSIVE ,
+  PARTITION b START (int '10') INCLUSIVE ,
+  PARTITION c START (int '20') INCLUSIVE
+  END (int '40') EXCLUSIVE );`)
+			defer testhelper.AssertQueryRuns(connectionPool, "DROP TABLE age")
+
+			partitionMap, err := backup.GetIncrementalPartitionRestoreMetadata(connectionPool)
+			Expect(err).ToNot(HaveOccurred())
+
 			fmt.Println(partitionMap)
-			fmt.Println(err)
 		})
 	})
 })
