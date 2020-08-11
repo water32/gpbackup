@@ -8,7 +8,7 @@ export PATH=$PATH:${GOPATH}/bin
 # Build gpbackup
 pushd ${GOPATH}/src/github.com/greenplum-db/gpbackup
   make depend build unit
-  version=$(git describe --tags | perl -pe 's/(.*)-([0-9]*)-(g[0-9a-f]*)/\1+dev.\2.\3/')
+  version=$(git describe --tags | perl -pe 's/(.*)-([0-9]*)-(g[0-9a-f]*)/\1/')
 popd
 echo ${version} > go_components/gpbackup_version
 
