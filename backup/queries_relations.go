@@ -351,20 +351,44 @@ func GetAllViews(connectionPool *dbconn.DBConn) []View {
 // This function is responsible for getting the necessary access share locks
 // for the target relations. Each worker thread will have its own set of
 // access share locks in parallel.
-func LockTables(connectionPool *dbconn.DBConn, tables []Relation) {
+func LockTables(connectionPool *dbconn.DBConn, tables []Relation) map[Relation]int {
 	gplog.Info("Acquiring ACCESS SHARE locks on tables")
+
+	progressBar := utils.NewProgressBar(len(tables), "Locks acquired: ", utils.PB_INFO)
+	progressBar.Start()
+
+	workerTableIndex := make(map[Relation]int, len(tables))
 	var workerPool sync.WaitGroup
-	for connNum := 0; connNum < connectionPool.NumConns; connNum++ {
+	switch parallelismMethod := MustGetFlagString(options.WORKER_PARALLELISM); parallelismMethod {
+	case "safe":
+		// For safe worker parallelism, lazily round robin divide the tables up
+		workerTableList := make(map[int][]Relation, connectionPool.NumConns)
+		for index, table := range tables {
+			connNum := index % connectionPool.NumConns
+			workerTableList[connNum] = append(workerTableList[connNum], table)
+			workerTableIndex[table] = connNum
+		}
+
+		// Acquire AccessShareLocks divided up for each worker thread
+		for connNum := 0; connNum < connectionPool.NumConns; connNum++ {
+			workerPool.Add(1)
+			go LockTablesWithConnection(connectionPool, workerTableList[connNum], connNum, &workerPool, progressBar)
+		}
+	case "unsafe":
+		fallthrough
+	default:
+		// Only acquire AccessShareLocks on the main worker thread
 		workerPool.Add(1)
-		go LockTablesWithConnection(connectionPool, tables, connNum, &workerPool)
+		go LockTablesWithConnection(connectionPool, tables, 0, &workerPool, progressBar)
 	}
 	workerPool.Wait()
+
+	progressBar.Finish()
+	return workerTableIndex
 }
 
-func LockTablesWithConnection(connectionPool *dbconn.DBConn, tables []Relation, whichConn int, wg *sync.WaitGroup) {
+func LockTablesWithConnection(connectionPool *dbconn.DBConn, tables []Relation, whichConn int, wg *sync.WaitGroup, progressBar utils.ProgressBar) {
 	defer wg.Done()
-	progressBar := utils.NewProgressBar(len(tables), "Locks acquired: ", utils.PB_VERBOSE)
-	progressBar.Start()
 
 	const batchSize = 100
 	lastBatchSize := len(tables) % batchSize
@@ -375,7 +399,9 @@ func LockTablesWithConnection(connectionPool *dbconn.DBConn, tables []Relation, 
 	// AccessExclusiveLock on the table.  In the case gpbackup is interrupted,
 	// cancelBlockedQueries() will cancel these queries during cleanup.
 	for i, currentBatch := range tableBatches {
-		_, err := connectionPool.Exec(fmt.Sprintf("LOCK TABLE %s IN ACCESS SHARE MODE", currentBatch), whichConn)
+		query := fmt.Sprintf("LOCK TABLE %s IN ACCESS SHARE MODE", currentBatch)
+		gplog.Verbose(fmt.Sprintf("Worker %d: %s", whichConn, query))
+		_, err := connectionPool.Exec(query, whichConn)
 		if err != nil {
 			if wasTerminated {
 				gplog.Warn("Interrupt received while acquiring ACCESS SHARE locks on tables")
@@ -389,8 +415,6 @@ func LockTablesWithConnection(connectionPool *dbconn.DBConn, tables []Relation, 
 		}
 		progressBar.Add(currentBatchSize)
 	}
-
-	progressBar.Finish()
 }
 
 // GenerateTableBatches batches tables to reduce network congestion and

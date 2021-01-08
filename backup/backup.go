@@ -118,7 +118,7 @@ func DoBackup() {
 	}
 
 	gplog.Info("Gathering table state information")
-	metadataTables, dataTables := RetrieveAndProcessTables()
+	metadataTables, dataTables, workerTableIndex := RetrieveAndProcessTables()
 	if !(MustGetFlagBool(options.METADATA_ONLY) || MustGetFlagBool(options.DATA_ONLY)) {
 		backupIncrementalMetadata()
 	}
@@ -157,7 +157,8 @@ func DoBackup() {
 		}
 
 		backupReport.RestorePlan = PopulateRestorePlan(backupSetTables, targetBackupRestorePlan, dataTables)
-		backupData(backupSetTables)
+		workerDataTables := AssignWorkerDataTables(backupSetTables, workerTableIndex)
+		backupData(backupSetTables, workerDataTables)
 	}
 	if MustGetFlagBool(options.WITH_STATS) {
 		backupStatistics(metadataTables)
@@ -245,7 +246,7 @@ func backupPredata(metadataFile *utils.FileWithByteCount, tables []Table, tableO
 	logCompletionMessage("Pre-data metadata metadata backup")
 }
 
-func backupData(tables []Table) {
+func backupData(tables []Table, workerDataTables map[int][]Table) {
 	if len(tables) == 0 {
 		// No incremental data changes to backup
 		gplog.Info("No tables to backup")
@@ -273,7 +274,7 @@ func backupData(tables []Table) {
 			MustGetFlagString(options.PLUGIN_CONFIG), compressStr, false, false, &wasTerminated)
 	}
 	gplog.Info("Writing data to file")
-	rowsCopiedMaps := backupDataForAllTables(tables)
+	rowsCopiedMaps := backupDataForAllTables(tables, workerDataTables)
 	AddTableDataEntriesToTOC(tables, rowsCopiedMaps)
 	if MustGetFlagBool(options.SINGLE_DATA_FILE) && MustGetFlagString(options.PLUGIN_CONFIG) != "" {
 		pluginConfig.BackupSegmentTOCs(globalCluster, globalFPInfo)

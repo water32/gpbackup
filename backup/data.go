@@ -74,7 +74,7 @@ func CopyTableOut(connectionPool *dbconn.DBConn, table Table, destinationToWrite
 	copyCommand := fmt.Sprintf("PROGRAM '%s%s %s %s'", checkPipeExistsCommand, customPipeThroughCommand, sendToDestinationCommand, destinationToWrite)
 
 	query := fmt.Sprintf("COPY %s TO %s WITH CSV DELIMITER '%s' ON SEGMENT IGNORE EXTERNAL PARTITIONS;", table.FQN(), copyCommand, tableDelim)
-	gplog.Verbose(query)
+	gplog.Verbose(fmt.Sprintf("Worker %d: %s", connNum, query))
 	result, err := connectionPool.Exec(query, connNum)
 	if err != nil {
 		return 0, err
@@ -113,7 +113,7 @@ func BackupSingleTableData(table Table, rowsCopiedMap map[uint32]int64, counters
 	return nil
 }
 
-func backupDataForAllTables(tables []Table) []map[uint32]int64 {
+func backupDataForAllTables(tables []Table, workerDataTables map[int][]Table) []map[uint32]int64 {
 	var numExtOrForeignTables int64
 	for _, table := range tables {
 		if table.SkipDataBackup() {
@@ -129,30 +129,53 @@ func backupDataForAllTables(tables []Table) []map[uint32]int64 {
 	 * TerminateHangingCopySessions to kill any COPY statements
 	 * in progress if they don't finish on their own.
 	 */
-	tasks := make(chan Table, len(tables))
 	var workerPool sync.WaitGroup
 	var copyErr error
-	for connNum := 0; connNum < connectionPool.NumConns; connNum++ {
-		rowsCopiedMaps[connNum] = make(map[uint32]int64)
-		workerPool.Add(1)
-		go func(whichConn int) {
-			defer workerPool.Done()
-			for table := range tasks {
-				if wasTerminated || copyErr != nil {
-					counters.ProgressBar.(*pb.ProgressBar).NotPrint = true
-					return
+	switch parallelismMethod := MustGetFlagString(options.WORKER_PARALLELISM); parallelismMethod {
+	case "safe":
+		for connNum := 0; connNum < connectionPool.NumConns; connNum++ {
+			rowsCopiedMaps[connNum] = make(map[uint32]int64)
+			workerPool.Add(1)
+			go func(whichConn int, assignedTables []Table) {
+				defer workerPool.Done()
+				for _, table := range assignedTables {
+					if wasTerminated || copyErr != nil {
+						counters.ProgressBar.(*pb.ProgressBar).NotPrint = true
+						return
+					}
+					err := BackupSingleTableData(table, rowsCopiedMaps[whichConn], &counters, whichConn)
+					if err != nil {
+						copyErr = err
+					}
 				}
-				err := BackupSingleTableData(table, rowsCopiedMaps[whichConn], &counters, whichConn)
-				if err != nil {
-					copyErr = err
+			}(connNum, workerDataTables[connNum])
+		}
+	case "unsafe":
+		fallthrough
+	default:
+		tasks := make(chan Table, len(tables))
+		for connNum := 0; connNum < connectionPool.NumConns; connNum++ {
+			rowsCopiedMaps[connNum] = make(map[uint32]int64)
+			workerPool.Add(1)
+			go func(whichConn int) {
+				defer workerPool.Done()
+				for table := range tasks {
+					if wasTerminated || copyErr != nil {
+						counters.ProgressBar.(*pb.ProgressBar).NotPrint = true
+						return
+					}
+					err := BackupSingleTableData(table, rowsCopiedMaps[whichConn], &counters, whichConn)
+					if err != nil {
+						copyErr = err
+					}
 				}
-			}
-		}(connNum)
+			}(connNum)
+		}
+		for _, table := range tables {
+			tasks <- table
+		}
+		close(tasks)
 	}
-	for _, table := range tables {
-		tasks <- table
-	}
-	close(tasks)
 	workerPool.Wait()
 
 	var agentErr error
@@ -191,4 +214,16 @@ func CheckTablesContainData(tables []Table) {
 		gplog.Warn("No tables in backup set contain data. Performing metadata-only backup instead.")
 		backupReport.MetadataOnly = true
 	}
+}
+
+func AssignWorkerDataTables(dataTables []Table, workerTableIndex map[Relation]int) map[int][]Table {
+	workerDataTables := make(map[int][]Table, connectionPool.NumConns)
+	if MustGetFlagString(options.WORKER_PARALLELISM) == "safe" {
+		for _, table := range dataTables {
+			assignedConnNum := workerTableIndex[table.Relation]
+			workerDataTables[assignedConnNum] = append(workerDataTables[assignedConnNum], table)
+		}
+	}
+
+	return workerDataTables
 }

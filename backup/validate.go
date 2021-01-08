@@ -120,6 +120,11 @@ func validateFlagValues() {
 		gplog.Fatal(errors.Errorf("Timestamp %s is invalid.  Timestamps must be in the format YYYYMMDDHHMMSS.",
 			MustGetFlagString(options.FROM_TIMESTAMP)), "")
 	}
+
+	if MustGetFlagInt(options.JOBS) > 1 && !options.WorkerParallelismChoices[MustGetFlagString(options.WORKER_PARALLELISM)] {
+		gplog.Fatal(errors.Errorf("Invalid --worker-parallelism value. Expected [safe|unsafe] but got %s.",
+			MustGetFlagString(options.WORKER_PARALLELISM)), "")
+	}
 }
 
 func validateFromTimestamp(fromTimestamp string) {

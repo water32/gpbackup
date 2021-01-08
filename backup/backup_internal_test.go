@@ -17,8 +17,8 @@ var _ = Describe("backup internal tests", func() {
 	Describe("backupData", func() {
 		It("returns successfully immediately if there is no table data to backup", func() {
 			emptyTableSlice := make([]Table, 0)
-
-			backupData(emptyTableSlice)
+			emptyWorkerDataTables := make(map[int][]Table)
+			backupData(emptyTableSlice, emptyWorkerDataTables)
 			Expect(string(log.Contents())).To(ContainSubstring("Data backup complete"))
 		})
 	})

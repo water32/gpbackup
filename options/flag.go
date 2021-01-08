@@ -47,7 +47,13 @@ const (
 	REDIRECT_SCHEMA       = "redirect-schema"
 	TRUNCATE_TABLE        = "truncate-table"
 	WITHOUT_GLOBALS       = "without-globals"
+	WORKER_PARALLELISM    = "worker-parallelism"
 )
+
+var WorkerParallelismChoices = map[string]bool {
+	"safe": true,
+	"unsafe": true,
+}
 
 func SetBackupFlagDefaults(flagSet *pflag.FlagSet) {
 	flagSet.String(BACKUP_DIR, "", "The absolute path of the directory to which all backup files will be written")
@@ -77,6 +83,7 @@ func SetBackupFlagDefaults(flagSet *pflag.FlagSet) {
 	flagSet.Bool(VERBOSE, false, "Print verbose log messages")
 	flagSet.Bool(WITH_STATS, false, "Back up query plan statistics")
 	flagSet.Bool(WITHOUT_GLOBALS, false, "Disable backup of global metadata")
+	flagSet.String(WORKER_PARALLELISM, "unsafe", "Parallelism method for --jobs flag. Valid choices are safe and unsafe.")
 }
 
 func SetRestoreFlagDefaults(flagSet *pflag.FlagSet) {
