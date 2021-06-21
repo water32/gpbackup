@@ -163,10 +163,11 @@ HEREDOC
 
 func CleanUpHelperFilesOnAllHosts(c *cluster.Cluster, fpInfo filepath.FilePathInfo) {
 	remoteOutput := c.GenerateAndExecuteCommand("Removing oid list and helper script files from segment data directories", cluster.ON_SEGMENTS, func(contentID int) string {
-		errorFile := fmt.Sprintf("%s_error", fpInfo.GetSegmentPipeFilePath(contentID))
 		oidFile := fpInfo.GetSegmentHelperFilePath(contentID, "oid")
 		scriptFile := fpInfo.GetSegmentHelperFilePath(contentID, "script")
-		return fmt.Sprintf("rm -f %s && rm -f %s && rm -f %s", errorFile, oidFile, scriptFile)
+		errorFile := fmt.Sprintf("%s_error", fpInfo.GetSegmentPipeFilePath(contentID))
+		skipFile := fmt.Sprintf("%s_skip_*", fpInfo.GetSegmentPipeFilePath(contentID))
+		return fmt.Sprintf("rm -f %s && rm -f %s && rm -f %s && rm -f %s", oidFile, scriptFile, errorFile, skipFile)
 	})
 	errMsg := fmt.Sprintf("Unable to remove segment helper file(s). See %s for a complete list of segments with errors and remove manually.",
 		gplog.GetLogFilePath())
@@ -218,4 +219,32 @@ func CheckAgentErrorsOnSegments(c *cluster.Cluster, fpInfo filepath.FilePathInfo
 			numErrors, gplog.GetLogFilePath(), helperLogName)
 	}
 	return nil
+}
+
+func CreateSkipFileOnSegments(oid string, c *cluster.Cluster, fpInfo filepath.FilePathInfo) {
+	localSkipFile, err := operating.System.TempFile("", "gprestore_skip")
+	gplog.FatalOnError(err, "Cannot open temporary file to write skip oid")
+	defer func() {
+		err = operating.System.Remove(localSkipFile.Name())
+		if err != nil {
+			gplog.Warn("Cannot remove temporary oid file: %s, Err: %s", localSkipFile.Name(), err.Error())
+		}
+	}()
+
+	WriteOidsToFile(localSkipFile.Name(), []string{oid})
+	generateScpCmd := func(contentID int) string {
+		sourceFile := localSkipFile.Name()
+		hostname := c.GetHostForContent(contentID)
+		dest := fmt.Sprintf("%s_skip_%s", fpInfo.GetSegmentPipeFilePath(contentID), oid)
+		gplog.Debug(fmt.Sprintf("Skipping the entry %s", oid))
+
+		return fmt.Sprintf(`scp %s %s:%s`, sourceFile, hostname, dest)
+	}
+	remoteOutput := c.GenerateAndExecuteCommand("Scp skip file to segments", cluster.ON_LOCAL|cluster.ON_SEGMENTS, generateScpCmd)
+
+	errMsg := "Failed to scp skip file"
+	errFunc := func(contentID int) string {
+		return "Failed to run scp"
+	}
+	c.CheckClusterError(remoteOutput, errMsg, errFunc, false)
 }
