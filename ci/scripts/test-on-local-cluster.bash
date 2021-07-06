@@ -60,7 +60,13 @@ export TEST_GPDB_VERSION=\$(echo \$out | sed -n 's/.*Greenplum Database \([0-9].
 
 # Test gpbackup
 pushd \${GOPATH}/src/github.com/greenplum-db/gpbackup
-  make unit integration end_to_end
+  make build
+  make install
+  echo \${GOPATH}
+  echo \${HOME}
+  GO111MODULE=on go install github.com/onsi/ginkgo/ginkgo
+  which ginkgo
+  GO111MODULE=on ginkgo -r -keepGoing -untilItFails -randomizeSuites -randomizeAllSpecs -noisySkippings=false -slowSpecThreshold=10 end_to_end -- --custom_backup_dir "/tmp" 2>&1
 popd
 SCRIPT
 

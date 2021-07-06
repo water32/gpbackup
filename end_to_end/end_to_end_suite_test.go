@@ -643,7 +643,7 @@ var _ = Describe("backup and restore end to end tests", func() {
 		})
 	})
 	Describe(`On Error Continue`, func() {
-		It(`gprestore continues when encountering errors during data load with --single-data-file and --on-error-continue`, func() {
+		FIt(`gprestore continues when encountering errors during data load with --single-data-file and --on-error-continue`, func() {
 			// This backup is corrupt because the data for a single row on
 			// segment0 was changed so that the value stored in the row is
 			// 9 instead of 1.  This will cause an issue when COPY FROM
