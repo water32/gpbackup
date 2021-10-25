@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"time"
 
 	"github.com/greenplum-db/gp-common-go-libs/dbconn"
 	"github.com/greenplum-db/gp-common-go-libs/testhelper"
@@ -350,6 +351,8 @@ var _ = Describe("End to End incremental tests", func() {
 					"--single-data-file",
 					"--plugin-config", pluginConfigPath)
 				forceMetadataFileDownloadFromPlugin(backupConn, incremental2Timestamp)
+
+				time.Sleep(5 * time.Minute)
 
 				gprestore(gprestorePath, restoreHelperPath, incremental2Timestamp,
 					"--redirect-db", "restoredb",

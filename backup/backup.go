@@ -3,6 +3,7 @@ package backup
 import (
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	path "path/filepath"
 	"runtime/debug"
@@ -270,14 +271,19 @@ func backupData(tables []Table) {
 			}
 		}
 		utils.WriteOidListToSegments(oidList, globalCluster, globalFPInfo)
-		utils.CreateFirstSegmentPipeOnAllHosts(oidList[0], globalCluster, globalFPInfo)
+
+		maxPipes := int(math.Min(float64(connectionPool.NumConns), float64(len(tables))))
+		for i := 0; i < maxPipes; i++ {
+			utils.CreateSegmentPipeOnAllHosts(oidList[i], globalCluster, globalFPInfo)
+		}
 		compressStr := fmt.Sprintf(" --compression-level %d", MustGetFlagInt(options.COMPRESSION_LEVEL))
+
 		if MustGetFlagBool(options.NO_COMPRESSION) {
 			compressStr = " --compression-level 0"
 		}
 		// Do not pass through the --on-error-continue flag because it does not apply to gpbackup
 		utils.StartGpbackupHelpers(globalCluster, globalFPInfo, "--backup-agent",
-			MustGetFlagString(options.PLUGIN_CONFIG), compressStr, false, false, &wasTerminated)
+			MustGetFlagString(options.PLUGIN_CONFIG), compressStr, false, false, &wasTerminated, MustGetFlagInt(options.SINGLE_DATA_FILE_COPY_PREFETCH))
 	}
 	gplog.Info("Writing data to file")
 	rowsCopiedMaps := backupDataForAllTables(tables)
@@ -429,7 +435,7 @@ func DoCleanup(backupFailed bool) {
 			}
 			if wasTerminated {
 				// It is possible for the COPY command to become orphaned if an agent process is killed
-				utils.TerminateHangingCopySessions(connectionPool, globalFPInfo, "gpbackup")
+				utils.TerminateHangingCopySessions(connectionPool, globalFPInfo, fmt.Sprintf("gpbackup_%s", globalFPInfo.Timestamp))
 			}
 			utils.CleanUpHelperFilesOnAllHosts(globalCluster, globalFPInfo)
 		}
