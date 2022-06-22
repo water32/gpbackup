@@ -1,0 +1,17 @@
+platform: linux
+
+image_resource:
+  type: registry-image
+
+inputs:
+- name: gpbackup
+- name: ccp_src
+- name: cluster_env_files
+- name: perf_tarball
+- name: gppkgs
+
+params:
+  OS: RHEL
+
+run:
+  path: gpbackup/ci/scripts/scale-snapshot.bash
