@@ -54,25 +54,25 @@ var _ = Describe("utils/toc tests", func() {
 		BeforeEach(func() {
 			startCount := uint64(0)
 			endCount := table1Len
-			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema", Name: "table1", ObjectType: "TABLE"}, startCount, endCount)
+			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema", Name: "table1", ObjectType: "TABLE"}, startCount, endCount, 0)
 			startCount = endCount
 			endCount += capsTableLen
-			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema", Name: "TABLE_CAPS", ObjectType: "TABLE"}, startCount, endCount)
+			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema", Name: "TABLE_CAPS", ObjectType: "TABLE"}, startCount, endCount, 0)
 			startCount = endCount
 			endCount += table2Len
-			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema2", Name: "table2", ObjectType: "TABLE"}, startCount, endCount)
+			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema2", Name: "table2", ObjectType: "TABLE"}, startCount, endCount, 0)
 			startCount = endCount
 			endCount += viewLen
-			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema", Name: "view", ObjectType: "VIEW"}, startCount, endCount)
+			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema", Name: "view", ObjectType: "VIEW"}, startCount, endCount, 0)
 			startCount = endCount
 			endCount += matViewLen
-			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema", Name: "matView", ObjectType: "MATERIALIZED VIEW"}, startCount, endCount)
+			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema", Name: "matView", ObjectType: "MATERIALIZED VIEW"}, startCount, endCount, 0)
 			startCount = endCount
 			endCount += sequenceLen
-			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema", Name: "sequence", ObjectType: "SEQUENCE"}, startCount, endCount)
+			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema", Name: "sequence", ObjectType: "SEQUENCE"}, startCount, endCount, 0)
 			startCount = endCount
 			endCount += indexLen
-			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema2", Name: "someindex", ObjectType: "INDEX", ReferenceObject: "schema2.table2"}, startCount, endCount)
+			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema2", Name: "someindex", ObjectType: "INDEX", ReferenceObject: "schema2.table2"}, startCount, endCount, 0)
 
 			metadataFile = bytes.NewReader([]byte(table1.Statement + capsTable.Statement + table2.Statement + view.Statement + matView.Statement + sequence.Statement + index.Statement))
 		})
@@ -154,10 +154,10 @@ var _ = Describe("utils/toc tests", func() {
 			BeforeEach(func() {
 				startCount := table1Len + capsTableLen + table2Len + viewLen + matViewLen + sequenceLen + indexLen
 				endCount := startCount + sequenceTableLen
-				tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema", Name: "sequence_table", ObjectType: "TABLE"}, startCount, endCount)
+				tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema", Name: "sequence_table", ObjectType: "TABLE"}, startCount, endCount, 0)
 				startCount = endCount
 				endCount += sequenceOwnerLen
-				tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema", Name: "sequence", ObjectType: "SEQUENCE OWNER", ReferenceObject: "schema.sequence_table"}, startCount, endCount)
+				tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema", Name: "sequence", ObjectType: "SEQUENCE OWNER", ReferenceObject: "schema.sequence_table"}, startCount, endCount, 0)
 
 				metadataFile = bytes.NewReader([]byte(table1.Statement + capsTable.Statement + table2.Statement + view.Statement + matView.Statement + sequence.Statement + index.Statement + sequenceTable.Statement + sequenceOwner.Statement))
 			})

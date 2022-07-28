@@ -91,7 +91,8 @@ func PrintCreateTableStatement(metadataFile *utils.FileWithByteCount, toc *toc.T
 		PrintRegularTableCreateStatement(metadataFile, nil, table)
 	}
 	section, entry := table.GetMetadataEntry()
-	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+	tier := tierMap[table.GetUniqueID()]
+	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
 	PrintPostCreateTableStatements(metadataFile, toc, table, tableMetadata)
 }
 
@@ -141,7 +142,8 @@ func PrintRegularTableCreateStatement(metadataFile *utils.FileWithByteCount, toc
 	printAlterColumnStatements(metadataFile, table, table.ColumnDefs)
 	if toc != nil {
 		section, entry := table.GetMetadataEntry()
-		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+		tier := tierMap[table.GetUniqueID()]
+		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
 	}
 }
 
@@ -274,7 +276,8 @@ func PrintCreateSequenceStatements(metadataFile *utils.FileWithByteCount,
 			utils.EscapeSingleQuotes(sequence.FQN()), definition.LastVal, definition.IsCalled)
 
 		section, entry := sequence.GetMetadataEntry()
-		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+		tier := tierMap[sequence.GetUniqueID()]
+		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
 		PrintObjectMetadata(metadataFile, toc, sequenceMetadata[sequence.Relation.GetUniqueID()], sequence, "")
 	}
 }
@@ -289,12 +292,12 @@ func PrintAlterSequenceStatements(metadataFile *utils.FileWithByteCount,
 			start := metadataFile.ByteCount
 			metadataFile.MustPrintf("\n\nALTER SEQUENCE %s OWNED BY %s;\n", seqFQN, sequence.OwningColumn)
 			entry := toc.MetadataEntry{
-				Schema: sequence.Relation.Schema,
-				Name: sequence.Relation.Name,
-				ObjectType: "SEQUENCE OWNER",
+				Schema:          sequence.Relation.Schema,
+				Name:            sequence.Relation.Name,
+				ObjectType:      "SEQUENCE OWNER",
 				ReferenceObject: sequence.OwningTable,
 			}
-			tocfile.AddMetadataEntry("predata", entry, start, metadataFile.ByteCount)
+			tocfile.AddMetadataEntry("predata", entry, start, metadataFile.ByteCount, 0)
 		}
 	}
 }
@@ -315,6 +318,7 @@ func PrintCreateViewStatement(metadataFile *utils.FileWithByteCount, toc *toc.TO
 			view.FQN(), view.Options, tablespaceClause, view.Definition.String[:len(view.Definition.String)-1])
 	}
 	section, entry := view.GetMetadataEntry()
-	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+	tier := tierMap[view.GetUniqueID()]
+	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
 	PrintObjectMetadata(metadataFile, toc, viewMetadata, view, "")
 }

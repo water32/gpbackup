@@ -54,7 +54,8 @@ CREATE OPERATOR %s.%s (
 );`, operator.Schema, operator.Name, operator.Procedure, strings.Join(optionalFields, ",\n\t"))
 
 	section, entry := operator.GetMetadataEntry()
-	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+	tier := tierMap[operator.GetUniqueID()]
+	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
 	PrintObjectMetadata(metadataFile, toc, operatorMetadata, operator, "")
 }
 
@@ -68,7 +69,8 @@ func PrintCreateOperatorFamilyStatements(metadataFile *utils.FileWithByteCount, 
 		metadataFile.MustPrintf("\n\nCREATE OPERATOR FAMILY %s;", operatorFamily.FQN())
 
 		section, entry := operatorFamily.GetMetadataEntry()
-		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+		tier := tierMap[operatorFamily.GetUniqueID()]
+		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
 		PrintObjectMetadata(metadataFile, toc, operatorFamilyMetadata[operatorFamily.GetUniqueID()], operatorFamily, "")
 	}
 }
@@ -118,6 +120,7 @@ func PrintCreateOperatorClassStatement(metadataFile *utils.FileWithByteCount, to
 	metadataFile.MustPrintf(" AS\n\t%s;", strings.Join(opClassClauses, ",\n\t"))
 
 	section, entry := operatorClass.GetMetadataEntry()
-	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+	tier := tierMap[operatorClass.GetUniqueID()]
+	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
 	PrintObjectMetadata(metadataFile, toc, operatorClassMetadata, operatorClass, "")
 }

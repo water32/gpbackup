@@ -30,7 +30,8 @@ func PrintCreateTextSearchParserStatement(metadataFile *utils.FileWithByteCount,
 	metadataFile.MustPrintf("\n);")
 
 	section, entry := parser.GetMetadataEntry()
-	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+	tier := tierMap[parser.GetUniqueID()]
+	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
 	PrintObjectMetadata(metadataFile, toc, parserMetadata, parser, "")
 }
 
@@ -44,7 +45,8 @@ func PrintCreateTextSearchTemplateStatement(metadataFile *utils.FileWithByteCoun
 	metadataFile.MustPrintf("\n);")
 
 	section, entry := template.GetMetadataEntry()
-	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+	tier := tierMap[template.GetUniqueID()]
+	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
 	PrintObjectMetadata(metadataFile, toc, templateMetadata, template, "")
 }
 
@@ -58,7 +60,8 @@ func PrintCreateTextSearchDictionaryStatement(metadataFile *utils.FileWithByteCo
 	metadataFile.MustPrintf("\n);")
 
 	section, entry := dictionary.GetMetadataEntry()
-	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+	tier := tierMap[dictionary.GetUniqueID()]
+	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
 	PrintObjectMetadata(metadataFile, toc, dictionaryMetadata, dictionary, "")
 }
 
@@ -69,7 +72,8 @@ func PrintCreateTextSearchConfigurationStatement(metadataFile *utils.FileWithByt
 	metadataFile.MustPrintf("\n);")
 
 	section, entry := configuration.GetMetadataEntry()
-	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+	tier := tierMap[configuration.GetUniqueID()]
+	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
 
 	tokens := make([]string, 0)
 	for token := range configuration.TokenToDicts {
@@ -81,7 +85,7 @@ func PrintCreateTextSearchConfigurationStatement(metadataFile *utils.FileWithByt
 		dicts := configuration.TokenToDicts[token]
 		metadataFile.MustPrintf("\n\nALTER TEXT SEARCH CONFIGURATION %s", configuration.FQN())
 		metadataFile.MustPrintf("\n\tADD MAPPING FOR \"%s\" WITH %s;", token, strings.Join(dicts, ", "))
-		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
 	}
 	PrintObjectMetadata(metadataFile, toc, configurationMetadata, configuration, "")
 }

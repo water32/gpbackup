@@ -16,6 +16,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+// FIXME: refactor
+var tierMap map[UniqueID]int
 /*
  * This file contains wrapper functions that group together functions relating
  * to querying and printing metadata, so that the logic for each object type
@@ -563,7 +565,7 @@ func addToMetadataMap(newMetadata MetadataMap, metadataMap MetadataMap) {
 func backupDependentObjects(metadataFile *utils.FileWithByteCount, tables []Table,
 	protocols []ExternalProtocol, filteredMetadata MetadataMap, constraints []Constraint,
 	sortables []Sortable, sequences []Sequence, funcInfoMap map[uint32]FunctionInfo, tableOnly bool) {
-
+	var sortedSlice []Sortable
 	gplog.Verbose("Writing CREATE statements for dependent objects to metadata file")
 
 	backupSet := createBackupSet(sortables)
@@ -571,7 +573,7 @@ func backupDependentObjects(metadataFile *utils.FileWithByteCount, tables []Tabl
 	if connectionPool.Version.Is("4") && !tableOnly {
 		AddProtocolDependenciesForGPDB4(relevantDeps, tables, protocols)
 	}
-	sortedSlice, tierMap := TopologicalSort(sortables, relevantDeps)
+	sortedSlice, tierMap = TopologicalSort(sortables, relevantDeps)
 	gplog.Info("%d", len(tierMap))
 
 	PrintDependentObjectStatements(metadataFile, globalTOC, sortedSlice, filteredMetadata, constraints, funcInfoMap)

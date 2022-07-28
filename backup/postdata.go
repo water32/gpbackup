@@ -18,7 +18,7 @@ func PrintCreateIndexStatements(metadataFile *utils.FileWithByteCount, toc *toc.
 			section, entry := index.GetMetadataEntry()
 
 			metadataFile.MustPrintf("\n\n%s;", index.Def.String)
-			toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+			toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, 0)
 
 			// Start INDEX metadata
 			indexFQN := utils.MakeFQN(index.OwningSchema, index.Name)
@@ -27,18 +27,18 @@ func PrintCreateIndexStatements(metadataFile *utils.FileWithByteCount, toc *toc.
 			if index.Tablespace != "" {
 				start := metadataFile.ByteCount
 				metadataFile.MustPrintf("\nALTER INDEX %s SET TABLESPACE %s;", indexFQN, index.Tablespace)
-				toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+				toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, 0)
 			}
 			tableFQN := utils.MakeFQN(index.OwningSchema, index.OwningTable)
 			if index.IsClustered {
 				start := metadataFile.ByteCount
 				metadataFile.MustPrintf("\nALTER TABLE %s CLUSTER ON %s;", tableFQN, index.Name)
-				toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+				toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, 0)
 			}
 			if index.IsReplicaIdentity {
 				start := metadataFile.ByteCount
 				metadataFile.MustPrintf("\nALTER TABLE %s REPLICA IDENTITY USING INDEX %s;", tableFQN, index.Name)
-				toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+				toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, 0)
 			}
 		}
 		PrintObjectMetadata(metadataFile, toc, indexMetadata[index.GetUniqueID()], index, "")
@@ -51,7 +51,7 @@ func PrintCreateRuleStatements(metadataFile *utils.FileWithByteCount, toc *toc.T
 		metadataFile.MustPrintf("\n\n%s", rule.Def.String)
 
 		section, entry := rule.GetMetadataEntry()
-		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, 0)
 		tableFQN := utils.MakeFQN(rule.OwningSchema, rule.OwningTable)
 		PrintObjectMetadata(metadataFile, toc, ruleMetadata[rule.GetUniqueID()], rule, tableFQN)
 	}
@@ -63,7 +63,7 @@ func PrintCreateTriggerStatements(metadataFile *utils.FileWithByteCount, toc *to
 		metadataFile.MustPrintf("\n\n%s;", trigger.Def.String)
 
 		section, entry := trigger.GetMetadataEntry()
-		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, 0)
 		tableFQN := utils.MakeFQN(trigger.OwningSchema, trigger.OwningTable)
 		PrintObjectMetadata(metadataFile, toc, triggerMetadata[trigger.GetUniqueID()], trigger, tableFQN)
 	}
@@ -79,7 +79,7 @@ func PrintCreateEventTriggerStatements(metadataFile *utils.FileWithByteCount, to
 			metadataFile.MustPrintf("\nWHEN TAG IN (%s)", eventTrigger.EventTags)
 		}
 		metadataFile.MustPrintf("\nEXECUTE PROCEDURE %s();", eventTrigger.FunctionName)
-		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, 0)
 
 		// Start EVENT TRIGGER metadata
 		entry.ReferenceObject = eventTrigger.Name
@@ -98,7 +98,7 @@ func PrintCreateEventTriggerStatements(metadataFile *utils.FileWithByteCount, to
 			}
 			start := metadataFile.ByteCount
 			metadataFile.MustPrintf("\nALTER EVENT TRIGGER %s %s;", eventTrigger.Name, enableOption)
-			toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+			toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, 0)
 		}
 		PrintObjectMetadata(metadataFile, toc, eventTriggerMetadata[eventTrigger.GetUniqueID()], eventTrigger, "")
 	}

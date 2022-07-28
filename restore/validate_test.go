@@ -34,13 +34,13 @@ var _ = Describe("restore/validate tests", func() {
 		BeforeEach(func() {
 			tocfile, backupfile = testutils.InitializeTestTOC(buffer, "predata")
 			backupfile.ByteCount = table1Len
-			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema1", Name: "table1", ObjectType: "TABLE"}, 0, backupfile.ByteCount)
+			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema1", Name: "table1", ObjectType: "TABLE"}, 0, backupfile.ByteCount, 0)
 			tocfile.AddMasterDataEntry("schema1", "table1", 1, "(i)", 0, "")
 			backupfile.ByteCount += table2Len
-			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema2", Name: "table2", ObjectType: "TABLE"}, table1Len, backupfile.ByteCount)
+			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema2", Name: "table2", ObjectType: "TABLE"}, table1Len, backupfile.ByteCount, 0)
 			tocfile.AddMasterDataEntry("schema2", "table2", 2, "(j)", 0, "")
 			backupfile.ByteCount += sequenceLen
-			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema", Name: "somesequence", ObjectType: "SEQUENCE"}, table1Len+table2Len, backupfile.ByteCount)
+			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema", Name: "somesequence", ObjectType: "SEQUENCE"}, table1Len+table2Len, backupfile.ByteCount, 0)
 			restore.SetTOC(tocfile)
 		})
 		It("passes when schema exists in normal backup", func() {
@@ -197,15 +197,15 @@ var _ = Describe("restore/validate tests", func() {
 		var backupfile *utils.FileWithByteCount
 		BeforeEach(func() {
 			tocfile, backupfile = testutils.InitializeTestTOC(buffer, "predata")
-			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema1", Name: "table1", ObjectType: "TABLE"}, 0, backupfile.ByteCount)
+			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema1", Name: "table1", ObjectType: "TABLE"}, 0, backupfile.ByteCount, 0)
 			tocfile.AddMasterDataEntry("schema1", "table1", 1, "(i)", 0, "")
 
-			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema2", Name: "table2", ObjectType: "TABLE"}, 0, backupfile.ByteCount)
+			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema2", Name: "table2", ObjectType: "TABLE"}, 0, backupfile.ByteCount, 0)
 			tocfile.AddMasterDataEntry("schema2", "table2", 2, "(j)", 0, "")
 
-			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema1", Name: "somesequence", ObjectType: "SEQUENCE"}, 0, backupfile.ByteCount)
-			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema1", Name: "someview", ObjectType: "VIEW"}, 0, backupfile.ByteCount)
-			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema1", Name: "somefunction", ObjectType: "FUNCTION"}, 0, backupfile.ByteCount)
+			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema1", Name: "somesequence", ObjectType: "SEQUENCE"}, 0, backupfile.ByteCount, 0)
+			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema1", Name: "someview", ObjectType: "VIEW"}, 0, backupfile.ByteCount, 0)
+			tocfile.AddMetadataEntry("predata", toc.MetadataEntry{Schema: "schema1", Name: "somefunction", ObjectType: "FUNCTION"}, 0, backupfile.ByteCount, 0)
 
 			restore.SetTOC(tocfile)
 		})

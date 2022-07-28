@@ -32,6 +32,7 @@ type MetadataEntry struct {
 	ReferenceObject string
 	StartByte       uint64
 	EndByte         uint64
+	Tier						int
 }
 
 type MasterDataEntry struct {
@@ -55,6 +56,11 @@ type IncrementalEntries struct {
 type AOEntry struct {
 	Modcount         int64
 	LastDDLTimestamp string
+}
+
+type UniqueID struct {
+	ClassID uint32
+	Oid     uint32
 }
 
 func NewTOC(filename string) *TOC {
@@ -259,9 +265,10 @@ type TOCObjectWithMetadata interface {
 	FQN() string
 }
 
-func (toc *TOC) AddMetadataEntry(section string, entry MetadataEntry, start, end uint64) {
+func (toc *TOC) AddMetadataEntry(section string, entry MetadataEntry, start, end uint64, tier int) {
 	entry.StartByte = start
 	entry.EndByte = end
+	entry.Tier = tier
 	*toc.metadataEntryMap[section] = append(*toc.metadataEntryMap[section], entry)
 }
 

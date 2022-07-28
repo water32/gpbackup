@@ -31,7 +31,7 @@ func printStatisticsStatementForTable(statisticsFile *utils.FileWithByteCount, t
 	start := statisticsFile.ByteCount
 	statisticsFile.MustPrintf("\n\n%s\n", query)
 	entry := toc.MetadataEntry{Schema: table.Schema, Name: table.Name, ObjectType: "STATISTICS"}
-	tocfile.AddMetadataEntry("statistics", entry, start, statisticsFile.ByteCount)
+	tocfile.AddMetadataEntry("statistics", entry, start, statisticsFile.ByteCount, 0)
 }
 
 func GenerateTupleStatisticsQuery(table Table, tupleStat TupleStatistic) string {

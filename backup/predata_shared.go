@@ -53,7 +53,8 @@ func PrintConstraintStatements(metadataFile *utils.FileWithByteCount, toc *toc.T
 		metadataFile.MustPrintf(alterStr, objStr, constraint.OwningObject, constraint.Name, constraint.ConDef.String)
 
 		section, entry := constraint.GetMetadataEntry()
-		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+		tier := tierMap[constraint.GetUniqueID()]
+		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
 		PrintObjectMetadata(metadataFile, toc, conMetadata[constraint.GetUniqueID()], constraint, constraint.OwningObject)
 	}
 }
@@ -66,7 +67,8 @@ func PrintCreateSchemaStatements(metadataFile *utils.FileWithByteCount, toc *toc
 			metadataFile.MustPrintf("\nCREATE SCHEMA %s;", schema.Name)
 		}
 		section, entry := schema.GetMetadataEntry()
-		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+		tier := tierMap[schema.GetUniqueID()]
+		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
 		PrintObjectMetadata(metadataFile, toc, schemaMetadata[schema.GetUniqueID()], schema, "")
 	}
 }

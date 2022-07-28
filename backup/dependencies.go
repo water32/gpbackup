@@ -114,7 +114,7 @@ func TopologicalSort(slice []Sortable, dependencies DependencyMap) ([]Sortable, 
 		item := queue[0]
 		UniqueID := item.GetUniqueID()
 		queue = queue[1:]
-		tierMap[UniqueID] = tierCount
+		tierMap[UniqueID] = tierCount		// Set tier for current item
 		gplog.Info("setting tier of %s to %d", item.FQN(), tierCount)
 		sorted = append(sorted, item)
 		notVisited[item.GetUniqueID()] = false
@@ -129,6 +129,7 @@ func TopologicalSort(slice []Sortable, dependencies DependencyMap) ([]Sortable, 
 	if len(nextTier) > 0 {
 		queue = nextTier
 		nextTier = make([]Sortable, 0)
+		tierCount++
 		goto STAGE2
 	}
 	if len(slice) != len(sorted) {

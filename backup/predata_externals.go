@@ -68,7 +68,8 @@ func PrintExternalTableCreateStatement(metadataFile *utils.FileWithByteCount, to
 	metadataFile.MustPrintf(";")
 	if toc != nil {
 		section, entry := table.GetMetadataEntry()
-		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+		tier := tierMap[table.GetUniqueID()]
+		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
 	}
 }
 
@@ -261,7 +262,7 @@ func generateLogErrorStatement(extTableDef ExternalTableDefinition) string {
 		} else {
 			logErrorStatement += "\nLOG ERRORS"
 		}
-	} else if extTableDef.ErrTableName != ""  && extTableDef.ErrTableSchema != "" {
+	} else if extTableDef.ErrTableName != "" && extTableDef.ErrTableSchema != "" {
 		errTableFQN := utils.MakeFQN(extTableDef.ErrTableSchema, extTableDef.ErrTableName)
 		logErrorStatement += fmt.Sprintf("\nLOG ERRORS INTO %s", errTableFQN)
 	}
@@ -331,7 +332,8 @@ func PrintCreateExternalProtocolStatement(metadataFile *utils.FileWithByteCount,
 		metadataFile.MustPrintf("PROTOCOL %s (%s);\n", protocol.Name, strings.Join(protocolFunctions, ", "))
 
 		section, entry := protocol.GetMetadataEntry()
-		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+		tier := tierMap[protocol.GetUniqueID()]
+		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
 	}
 
 	PrintObjectMetadata(metadataFile, toc, protoMetadata, protocol, "")
@@ -370,6 +372,6 @@ func PrintExchangeExternalPartitionStatements(metadataFile *utils.FileWithByteCo
 		metadataFile.MustPrintf("\n\nDROP TABLE %s;", extPartRelationName)
 
 		section, entry := externalPartition.GetMetadataEntry()
-		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, -1) // not sure what tier to put external partition in
 	}
 }

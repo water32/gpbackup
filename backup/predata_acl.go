@@ -75,7 +75,7 @@ func PrintStatements(metadataFile *utils.FileWithByteCount, toc *toc.TOC,
 				entry.ReferenceObject = entry.Name
 			}
 		}
-		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, 0)
 	}
 }
 
@@ -107,7 +107,7 @@ func PrintObjectMetadata(metadataFile *utils.FileWithByteCount, toc *toc.TOC,
 // Only print grant statements for any functions that belong to extensions
 func printExtensionFunctionACLs(metadataFile *utils.FileWithByteCount, toc *toc.TOC,
 	metadataMap MetadataMap, funcInfoMap map[uint32]FunctionInfo) {
-	type objectInfo struct{
+	type objectInfo struct {
 		FunctionInfo
 		ObjectMetadata
 	}
@@ -540,7 +540,7 @@ func PrintDefaultPrivilegesStatements(metadataFile *utils.FileWithByteCount, toc
 		start := metadataFile.ByteCount
 		metadataFile.MustPrintln("\n\n" + strings.Join(statements, "\n"))
 		section, entry := priv.GetMetadataEntry()
-		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
+		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, 0)
 	}
 }
 
