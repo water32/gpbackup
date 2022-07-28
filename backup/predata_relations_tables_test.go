@@ -497,34 +497,34 @@ SET SUBPARTITION TEMPLATE
 
 		It("does not print default replica identity statement", func() {
 			testTable.ReplicaIdentity = "d"
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, noMetadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, noMetadata, 0)
 			testhelper.NotExpectRegexp(buffer, `REPLICA IDENTITY`)
 		})
 		It("does not print index replica identity statement", func() {
 			testTable.ReplicaIdentity = "i"
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, noMetadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, noMetadata, 0)
 			testhelper.NotExpectRegexp(buffer, `REPLICA IDENTITY`)
 		})
 		It("does not print null replica identity statement", func() {
 			testTable.ReplicaIdentity = ""
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, noMetadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, noMetadata, 0)
 			testhelper.NotExpectRegexp(buffer, `REPLICA IDENTITY`)
 		})
 		It("prints replica identity full", func() {
 			testTable.ReplicaIdentity = "f"
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, noMetadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, noMetadata, 0)
 			testhelper.ExpectRegexp(buffer, `ALTER TABLE public.tablename REPLICA IDENTITY FULL;`)
 		})
 		It("prints replica identity nothing", func() {
 			testTable.ReplicaIdentity = "n"
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, noMetadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, noMetadata, 0)
 			testhelper.ExpectRegexp(buffer, `ALTER TABLE public.tablename REPLICA IDENTITY NOTHING;`)
 		})
 		It("prints a block with a table comment", func() {
 			col := []backup.ColumnDefinition{rowOne}
 			testTable.ColumnDefs = col
 			tableMetadata := testutils.DefaultMetadata("TABLE", false, false, true, false)
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata, 0)
 			testhelper.ExpectRegexp(buffer, `
 
 COMMENT ON TABLE public.tablename IS 'This is a table comment.';`)
@@ -532,7 +532,7 @@ COMMENT ON TABLE public.tablename IS 'This is a table comment.';`)
 		It("prints a block with a single column comment", func() {
 			col := []backup.ColumnDefinition{rowCommentOne}
 			testTable.ColumnDefs = col
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, noMetadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, noMetadata, 0)
 			testhelper.ExpectRegexp(buffer, `
 
 COMMENT ON COLUMN public.tablename.i IS 'This is a column comment.';`)
@@ -542,7 +542,7 @@ COMMENT ON COLUMN public.tablename.i IS 'This is a column comment.';`)
 
 			col := []backup.ColumnDefinition{rowCommentSpecialCharacters}
 			testTable.ColumnDefs = col
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, noMetadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, noMetadata, 0)
 			testhelper.ExpectRegexp(buffer, `
 
 COMMENT ON COLUMN public.tablename.i IS 'This is a ta''ble 1+=;,./\>,<@\\n^comment.';`)
@@ -550,7 +550,7 @@ COMMENT ON COLUMN public.tablename.i IS 'This is a ta''ble 1+=;,./\>,<@\\n^comme
 		It("prints a block with multiple column comments", func() {
 			col := []backup.ColumnDefinition{rowCommentOne, rowCommentTwo}
 			testTable.ColumnDefs = col
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, noMetadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, noMetadata, 0)
 			testhelper.ExpectRegexp(buffer, `
 
 COMMENT ON COLUMN public.tablename.i IS 'This is a column comment.';
@@ -562,7 +562,7 @@ COMMENT ON COLUMN public.tablename.j IS 'This is another column comment.';`)
 			col := []backup.ColumnDefinition{rowOne}
 			testTable.ColumnDefs = col
 			tableMetadata := testutils.DefaultMetadata("TABLE", false, true, false, false)
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata, 0)
 			testhelper.ExpectRegexp(buffer, `
 
 ALTER TABLE public.tablename OWNER TO testrole;`)
@@ -571,7 +571,7 @@ ALTER TABLE public.tablename OWNER TO testrole;`)
 			col := []backup.ColumnDefinition{rowOne}
 			testTable.ColumnDefs = col
 			tableMetadata := testutils.DefaultMetadata("TABLE", false, false, false, true)
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata, 0)
 			testhelper.ExpectRegexp(buffer, `
 
 SECURITY LABEL FOR dummy ON TABLE public.tablename IS 'unclassified';`)
@@ -580,7 +580,7 @@ SECURITY LABEL FOR dummy ON TABLE public.tablename IS 'unclassified';`)
 			testTable.ForeignDef = backup.ForeignTableDefinition{Options: "", Server: "fs"}
 			testTable.ReplicaIdentity = "n"
 			tableMetadata := testutils.DefaultMetadata("FOREIGN TABLE", true, true, true, true)
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata, 0)
 			testhelper.NotExpectRegexp(buffer, `REPLICA IDENTITY`)
 		})
 		It("prints owner, comment, security label, and ACL statements for foreign table", func() {
@@ -588,7 +588,7 @@ SECURITY LABEL FOR dummy ON TABLE public.tablename IS 'unclassified';`)
 			testTable.ColumnDefs = col
 			testTable.ForeignDef = backup.ForeignTableDefinition{Options: "", Server: "fs"}
 			tableMetadata := testutils.DefaultMetadata("FOREIGN TABLE", true, true, true, true)
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata, 0)
 			testhelper.ExpectRegexp(buffer, `
 
 COMMENT ON FOREIGN TABLE public.tablename IS 'This is a foreign table comment.';
@@ -608,7 +608,7 @@ SECURITY LABEL FOR dummy ON FOREIGN TABLE public.tablename IS 'unclassified';`)
 			col := []backup.ColumnDefinition{rowCommentOne, rowCommentTwo}
 			testTable.ColumnDefs = col
 			tableMetadata := backup.ObjectMetadata{Owner: "testrole", Comment: "This is a table comment."}
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata, 0)
 			testhelper.ExpectRegexp(buffer, `
 
 COMMENT ON TABLE public.tablename IS 'This is a table comment.';
@@ -628,7 +628,7 @@ COMMENT ON COLUMN public.tablename.j IS 'This is another column comment.';`)
 			col := []backup.ColumnDefinition{privilegesColumnOne, privilegesColumnTwo}
 			testTable.ColumnDefs = col
 			tableMetadata := backup.ObjectMetadata{Owner: "testrole"}
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata, 0)
 			testhelper.ExpectRegexp(buffer, `
 
 ALTER TABLE public.tablename OWNER TO testrole;
@@ -648,7 +648,7 @@ GRANT ALL (j) ON TABLE public.tablename TO testrole2;`)
 			privilegesColumnTwo := backup.ColumnDefinition{Oid: 1, Num: 2, Name: "j", Type: "character varying(20)", StatTarget: -1, SecurityLabelProvider: "dummy", SecurityLabel: "unclassified"}
 			col := []backup.ColumnDefinition{privilegesColumnOne, privilegesColumnTwo}
 			testTable.ColumnDefs = col
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, backup.ObjectMetadata{})
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, backup.ObjectMetadata{}, 0)
 			testhelper.ExpectRegexp(buffer, `
 
 SECURITY LABEL FOR dummy ON COLUMN public.tablename.i IS 'unclassified';
@@ -661,7 +661,7 @@ SECURITY LABEL FOR dummy ON COLUMN public.tablename.j IS 'unclassified';`)
 				{OldSchema: "schema1", NewSchema: "schema2", Name: "table1"},
 				{OldSchema: "schema2", NewSchema: "schema1", Name: "table2"},
 			}
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, backup.ObjectMetadata{})
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, backup.ObjectMetadata{}, 0)
 			testhelper.ExpectRegexp(buffer, `
 
 ALTER TABLE schema1.table1 SET SCHEMA schema2;

@@ -308,6 +308,7 @@ func PrintCreateExternalProtocolStatement(metadataFile *utils.FileWithByteCount,
 	start := metadataFile.ByteCount
 	funcOidList := []uint32{protocol.ReadFunction, protocol.WriteFunction, protocol.Validator}
 	hasUserDefinedFunc := false
+	tier := tierMap[protocol.GetUniqueID()]
 	for _, funcOid := range funcOidList {
 		if funcInfo, ok := funcInfoMap[funcOid]; ok && !funcInfo.IsInternal {
 			hasUserDefinedFunc = true
@@ -332,11 +333,9 @@ func PrintCreateExternalProtocolStatement(metadataFile *utils.FileWithByteCount,
 		metadataFile.MustPrintf("PROTOCOL %s (%s);\n", protocol.Name, strings.Join(protocolFunctions, ", "))
 
 		section, entry := protocol.GetMetadataEntry()
-		tier := tierMap[protocol.GetUniqueID()]
 		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
 	}
-
-	PrintObjectMetadata(metadataFile, toc, protoMetadata, protocol, "")
+	PrintObjectMetadata(metadataFile, toc, protoMetadata, protocol, "", tier)
 }
 
 func PrintExchangeExternalPartitionStatements(metadataFile *utils.FileWithByteCount, toc *toc.TOC, extPartitions []PartitionInfo, partInfoMap map[uint32]PartitionInfo, tables []Table) {
@@ -372,6 +371,6 @@ func PrintExchangeExternalPartitionStatements(metadataFile *utils.FileWithByteCo
 		metadataFile.MustPrintf("\n\nDROP TABLE %s;", extPartRelationName)
 
 		section, entry := externalPartition.GetMetadataEntry()
-		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, -1) // not sure what tier to put external partition in
+		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, 0) // not sure what tier to put external partition in
 	}
 }

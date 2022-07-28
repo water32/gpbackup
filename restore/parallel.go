@@ -55,8 +55,11 @@ func ExecuteStatements(statements []toc.StatementWithType, progressBar utils.Pro
 	var fatalErr error
 	var numErrors int32
 	tasks := make(chan toc.StatementWithType, len(statements))
+	// need to restore all statements
+	// tier = 0 means done in serial
+	// tier > 0 parallelized based on tier
 	for _, statement := range statements {
-		tasks <- statement
+			tasks <- statement
 	}
 	close(tasks)
 
@@ -128,3 +131,28 @@ func BatchPostdataStatements(statements []toc.StatementWithType) ([]toc.Statemen
 	}
 	return firstBatch, secondBatch, thirdBatch
 }
+
+func BatchPredataStatements(statements []toc.StatementWithType) ([]toc.StatementWithType, map[int][]toc.StatementWithType, []toc.StatementWithType) {
+// tier 0
+	foundNumberedTier := false
+	firstTierZero := make([]toc.StatementWithType, 0)
+	numberedTiers := make(map[int][]toc.StatementWithType)
+	secondTierZero := make([]toc.StatementWithType, 0)
+
+	for _, statement := range statements {
+		if statement.Tier > 0 {
+			foundNumberedTier = true
+			numberedTiers[statement.Tier] = append(numberedTiers[statement.Tier], statement)
+		}	else if statement.Tier == 0 {
+			if !foundNumberedTier {
+				// insert into firstTierZero
+				firstTierZero = append(firstTierZero, statement)
+			} else {
+				// insert into secondTierZero
+				secondTierZero = append(secondTierZero, statement)
+			}
+		}  
+	}
+	return firstTierZero, numberedTiers, secondTierZero
+}
+

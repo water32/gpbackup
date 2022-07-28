@@ -32,28 +32,28 @@ var _ = Describe("backup/predata_acl tests", func() {
 		privilegesWithGrant := []backup.ACL{hasAllPrivilegesWithGrant, hasMostPrivilegesWithGrant, hasSinglePrivilegeWithGrant}
 		It("prints a block with a table comment", func() {
 			tableMetadata := backup.ObjectMetadata{Comment: "This is a table comment."}
-			backup.PrintObjectMetadata(backupfile, tocfile, tableMetadata, table, "")
+			backup.PrintObjectMetadata(backupfile, tocfile, tableMetadata, table, "", 0)
 			testhelper.ExpectRegexp(buffer, `
 
 COMMENT ON TABLE public.tablename IS 'This is a table comment.';`)
 		})
 		It("prints a block with a table comment with special characters", func() {
 			tableMetadata := backup.ObjectMetadata{Comment: `This is a ta'ble 1+=;,./\>,<@\\n^comment.`}
-			backup.PrintObjectMetadata(backupfile, tocfile, tableMetadata, table, "")
+			backup.PrintObjectMetadata(backupfile, tocfile, tableMetadata, table, "", 0)
 			testhelper.ExpectRegexp(buffer, `
 
 COMMENT ON TABLE public.tablename IS 'This is a ta''ble 1+=;,./\>,<@\\n^comment.';`)
 		})
 		It("prints an ALTER TABLE ... OWNER TO statement to set the table owner", func() {
 			tableMetadata := backup.ObjectMetadata{Owner: "testrole"}
-			backup.PrintObjectMetadata(backupfile, tocfile, tableMetadata, table, "")
+			backup.PrintObjectMetadata(backupfile, tocfile, tableMetadata, table, "", 0)
 			testhelper.ExpectRegexp(buffer, `
 
 ALTER TABLE public.tablename OWNER TO testrole;`)
 		})
 		It("prints a block of REVOKE and GRANT statements", func() {
 			tableMetadata := backup.ObjectMetadata{Privileges: privileges}
-			backup.PrintObjectMetadata(backupfile, tocfile, tableMetadata, table, "")
+			backup.PrintObjectMetadata(backupfile, tocfile, tableMetadata, table, "", 0)
 			testhelper.ExpectRegexp(buffer, `
 
 REVOKE ALL ON TABLE public.tablename FROM PUBLIC;
@@ -63,7 +63,7 @@ GRANT TRIGGER ON TABLE public.tablename TO PUBLIC;`)
 		})
 		It("prints a block of REVOKE and GRANT statements WITH GRANT OPTION", func() {
 			tableMetadata := backup.ObjectMetadata{Privileges: privilegesWithGrant}
-			backup.PrintObjectMetadata(backupfile, tocfile, tableMetadata, table, "")
+			backup.PrintObjectMetadata(backupfile, tocfile, tableMetadata, table, "", 0)
 			testhelper.ExpectRegexp(buffer, `
 
 REVOKE ALL ON TABLE public.tablename FROM PUBLIC;
@@ -73,7 +73,7 @@ GRANT TRIGGER ON TABLE public.tablename TO PUBLIC WITH GRANT OPTION;`)
 		})
 		It("prints a block of REVOKE and GRANT statements, some with WITH GRANT OPTION, some without", func() {
 			tableMetadata := backup.ObjectMetadata{Privileges: []backup.ACL{hasAllPrivileges, hasMostPrivilegesWithGrant}}
-			backup.PrintObjectMetadata(backupfile, tocfile, tableMetadata, table, "")
+			backup.PrintObjectMetadata(backupfile, tocfile, tableMetadata, table, "", 0)
 			testhelper.ExpectRegexp(buffer, `
 
 REVOKE ALL ON TABLE public.tablename FROM PUBLIC;
@@ -82,7 +82,7 @@ GRANT SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES ON TABLE public.tablename 
 		})
 		It("prints both an ALTER TABLE ... OWNER TO statement and a table comment", func() {
 			tableMetadata := backup.ObjectMetadata{Comment: "This is a table comment.", Owner: "testrole"}
-			backup.PrintObjectMetadata(backupfile, tocfile, tableMetadata, table, "")
+			backup.PrintObjectMetadata(backupfile, tocfile, tableMetadata, table, "", 0)
 			testhelper.ExpectRegexp(buffer, `
 
 COMMENT ON TABLE public.tablename IS 'This is a table comment.';
@@ -92,7 +92,7 @@ ALTER TABLE public.tablename OWNER TO testrole;`)
 		})
 		It("prints both a block of REVOKE and GRANT statements and an ALTER TABLE ... OWNER TO statement", func() {
 			tableMetadata := backup.ObjectMetadata{Privileges: privileges, Owner: "testrole"}
-			backup.PrintObjectMetadata(backupfile, tocfile, tableMetadata, table, "")
+			backup.PrintObjectMetadata(backupfile, tocfile, tableMetadata, table, "", 0)
 			testhelper.ExpectRegexp(buffer, `
 
 ALTER TABLE public.tablename OWNER TO testrole;
@@ -106,7 +106,7 @@ GRANT TRIGGER ON TABLE public.tablename TO PUBLIC;`)
 		})
 		It("prints both a block of REVOKE and GRANT statements and a table comment", func() {
 			tableMetadata := backup.ObjectMetadata{Privileges: privileges, Comment: "This is a table comment."}
-			backup.PrintObjectMetadata(backupfile, tocfile, tableMetadata, table, "")
+			backup.PrintObjectMetadata(backupfile, tocfile, tableMetadata, table, "", 0)
 			testhelper.ExpectRegexp(buffer, `
 
 COMMENT ON TABLE public.tablename IS 'This is a table comment.';
@@ -119,7 +119,7 @@ GRANT TRIGGER ON TABLE public.tablename TO PUBLIC;`)
 		})
 		It("prints REVOKE and GRANT statements, an ALTER TABLE ... OWNER TO statement, and comments", func() {
 			tableMetadata := backup.ObjectMetadata{Privileges: privileges, Owner: "testrole", Comment: "This is a table comment."}
-			backup.PrintObjectMetadata(backupfile, tocfile, tableMetadata, table, "")
+			backup.PrintObjectMetadata(backupfile, tocfile, tableMetadata, table, "", 0)
 			testhelper.ExpectRegexp(buffer, `
 
 COMMENT ON TABLE public.tablename IS 'This is a table comment.';
@@ -138,7 +138,7 @@ GRANT TRIGGER ON TABLE public.tablename TO PUBLIC;`)
 			server := backup.ForeignServer{Name: "foreignserver"}
 			serverPrivileges := testutils.DefaultACLForType("testrole", "FOREIGN SERVER")
 			serverMetadata := backup.ObjectMetadata{Privileges: []backup.ACL{serverPrivileges}, Owner: "testrole"}
-			backup.PrintObjectMetadata(backupfile, tocfile, serverMetadata, server, "")
+			backup.PrintObjectMetadata(backupfile, tocfile, serverMetadata, server, "", 0)
 			testhelper.ExpectRegexp(buffer, `
 
 ALTER SERVER foreignserver OWNER TO testrole;
@@ -152,7 +152,7 @@ GRANT ALL ON FOREIGN SERVER foreignserver TO testrole;`)
 			aggregate := backup.Aggregate{Schema: "public", Name: "testagg"}
 			aggregatePrivileges := testutils.DefaultACLForType("testrole", "AGGREGATE")
 			aggregateMetadata := backup.ObjectMetadata{Privileges: []backup.ACL{aggregatePrivileges}, Owner: "testrole"}
-			backup.PrintObjectMetadata(backupfile, tocfile, aggregateMetadata, aggregate, "")
+			backup.PrintObjectMetadata(backupfile, tocfile, aggregateMetadata, aggregate, "", 0)
 			testhelper.ExpectRegexp(buffer, `
 
 ALTER AGGREGATE public.testagg(*) OWNER TO testrole;
@@ -172,7 +172,7 @@ REVOKE ALL ON FUNCTION public.testagg(*) FROM testrole;`)
 					expectedKeyword = `SEQUENCE`
 				}
 
-				backup.PrintObjectMetadata(backupfile, tocfile, objectMetadata, sequence, "public.sequencename")
+				backup.PrintObjectMetadata(backupfile, tocfile, objectMetadata, sequence, "public.sequencename", 0)
 				testhelper.ExpectRegexp(buffer, fmt.Sprintf(`
 
 ALTER %s public.sequencename OWNER TO testrole;`, expectedKeyword))
@@ -183,7 +183,7 @@ ALTER %s public.sequencename OWNER TO testrole;`, expectedKeyword))
 					expectedKeyword = `VIEW`
 				}
 
-				backup.PrintObjectMetadata(backupfile, tocfile, objectMetadata, view, "public.viewname")
+				backup.PrintObjectMetadata(backupfile, tocfile, objectMetadata, view, "public.viewname", 0)
 				testhelper.ExpectRegexp(buffer, fmt.Sprintf(`
 
 ALTER %s public.viewname OWNER TO testrole;`, expectedKeyword))

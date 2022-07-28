@@ -278,6 +278,7 @@ func restorePredata(metadataFilename string) {
 	if wasTerminated {
 		return
 	}
+	var numErrors int32
 	gplog.Info("Restoring pre-data metadata")
 	// if not incremental restore - assume database is empty and just filter based on user input
 	filters := NewFilters(opts.IncludedSchemas, opts.ExcludedSchemas, opts.IncludedRelations, opts.ExcludedRelations)
@@ -292,7 +293,17 @@ func restorePredata(metadataFilename string) {
 	progressBar.Start()
 
 	RestoreSchemas(schemaStatements, progressBar)
-	numErrors := ExecuteRestoreMetadataStatements(statements, "Pre-data objects", progressBar, utils.PB_VERBOSE, false)
+	if connectionPool.NumConns > 1 {
+		// batch statements by tier
+		first, tiered, second := BatchPredataStatements(statements)
+		numErrors = ExecuteRestoreMetadataStatements(first, "Pre-data objects", progressBar, utils.PB_VERBOSE, false)
+		for _, tier := range tiered {
+			numErrors += ExecuteRestoreMetadataStatements(tier, "Pre-data objects", progressBar, utils.PB_VERBOSE, true)
+		}
+		numErrors += ExecuteRestoreMetadataStatements(second, "Pre-data objects", progressBar, utils.PB_VERBOSE, false)
+	} else {
+		numErrors = ExecuteRestoreMetadataStatements(statements, "Pre-data objects", progressBar, utils.PB_VERBOSE, false)
+	}
 
 	progressBar.Finish()
 	if wasTerminated {

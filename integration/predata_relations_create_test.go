@@ -305,7 +305,7 @@ SET SUBPARTITION TEMPLATE ` + `
 			backup.PrintRegularTableCreateStatement(backupfile, tocfile, testTable)
 
 			metadata := testutils.DefaultMetadata("TABLE", true, true, true, true)
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, metadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, metadata, 0)
 
 			testhelper.AssertQueryRuns(connectionPool, buffer.String())
 			defer testhelper.AssertQueryRuns(connectionPool, "DROP FOREIGN TABLE public.testtable")
@@ -339,7 +339,7 @@ SET SUBPARTITION TEMPLATE ` + `
 		})
 		It("prints only owner for a table with no comment or column comments", func() {
 			tableMetadata.Owner = "testrole"
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata, 0)
 
 			testhelper.AssertQueryRuns(connectionPool, buffer.String())
 			testTableUniqueID := testutils.UniqueIDFromObjectName(connectionPool, "public", "testtable", backup.TYPE_RELATION)
@@ -355,7 +355,7 @@ SET SUBPARTITION TEMPLATE ` + `
 		It("prints table comment, table privileges, table owner, table security label, and column comments for a table", func() {
 			tableMetadata = testutils.DefaultMetadata("TABLE", true, true, true, includeSecurityLabels)
 			testTable.ColumnDefs[0].Comment = "This is a column comment."
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata, 0)
 
 			testhelper.AssertQueryRuns(connectionPool, buffer.String())
 
@@ -373,7 +373,7 @@ SET SUBPARTITION TEMPLATE ` + `
 			privilegesColumnOne := backup.ColumnDefinition{Oid: 0, Num: 1, Name: "i", Type: "integer", StatTarget: -1, Privileges: sql.NullString{String: "testrole=r/testrole", Valid: true}}
 			tableMetadata.Owner = "testrole"
 			testTable.ColumnDefs = []backup.ColumnDefinition{privilegesColumnOne}
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata, 0)
 
 			testhelper.AssertQueryRuns(connectionPool, buffer.String())
 
@@ -386,7 +386,7 @@ SET SUBPARTITION TEMPLATE ` + `
 			testutils.SkipIfBefore6(connectionPool)
 			securityLabelColumnOne := backup.ColumnDefinition{Oid: 0, Num: 1, Name: "i", Type: "integer", StatTarget: -1, SecurityLabelProvider: "dummy", SecurityLabel: "unclassified"}
 			testTable.ColumnDefs = []backup.ColumnDefinition{securityLabelColumnOne}
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata, 0)
 
 			testhelper.AssertQueryRuns(connectionPool, buffer.String())
 
@@ -399,7 +399,7 @@ SET SUBPARTITION TEMPLATE ` + `
 			testutils.SkipIfBefore6(connectionPool)
 
 			testTable.ReplicaIdentity = "f"
-			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata)
+			backup.PrintPostCreateTableStatements(backupfile, tocfile, testTable, tableMetadata, 0)
 			testhelper.AssertQueryRuns(connectionPool, buffer.String())
 			testTable.Oid = testutils.OidFromObjectName(connectionPool, "public", "testtable", backup.TYPE_RELATION)
 			resultTable := backup.ConstructDefinitionsForTables(connectionPool, []backup.Relation{testTable.Relation})[0]

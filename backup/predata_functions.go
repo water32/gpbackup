@@ -26,7 +26,7 @@ func PrintCreateFunctionStatement(metadataFile *utils.FileWithByteCount, toc *to
 	section, entry := funcDef.GetMetadataEntry()
 	tier := tierMap[funcDef.GetUniqueID()]
 	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
-	PrintObjectMetadata(metadataFile, toc, funcMetadata, funcDef, "")
+	PrintObjectMetadata(metadataFile, toc, funcMetadata, funcDef, "", tier)
 }
 
 /*
@@ -169,7 +169,7 @@ func PrintCreateAggregateStatement(metadataFile *utils.FileWithByteCount, toc *t
 	section, entry := aggDef.GetMetadataEntry()
 	tier := tierMap[aggDef.GetUniqueID()]
 	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
-	PrintObjectMetadata(metadataFile, toc, aggMetadata, aggDef, "")
+	PrintObjectMetadata(metadataFile, toc, aggMetadata, aggDef, "", tier)
 }
 
 func PrintCreateCastStatement(metadataFile *utils.FileWithByteCount, toc *toc.TOC, castDef Cast, castMetadata ObjectMetadata) {
@@ -196,7 +196,7 @@ func PrintCreateCastStatement(metadataFile *utils.FileWithByteCount, toc *toc.TO
 	section, entry := castDef.GetMetadataEntry()
 	tier := tierMap[castDef.GetUniqueID()]
 	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
-	PrintObjectMetadata(metadataFile, toc, castMetadata, castDef, "")
+	PrintObjectMetadata(metadataFile, toc, castMetadata, castDef, "", tier)
 }
 
 func PrintCreateExtensionStatements(metadataFile *utils.FileWithByteCount, toc *toc.TOC, extensionDefs []Extension, extensionMetadata MetadataMap) {
@@ -207,7 +207,7 @@ func PrintCreateExtensionStatements(metadataFile *utils.FileWithByteCount, toc *
 		section, entry := extensionDef.GetMetadataEntry()
 		tier := tierMap[extensionDef.GetUniqueID()]
 		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
-		PrintObjectMetadata(metadataFile, toc, extensionMetadata[extensionDef.GetUniqueID()], extensionDef, "")
+		PrintObjectMetadata(metadataFile, toc, extensionMetadata[extensionDef.GetUniqueID()], extensionDef, "", tier)
 	}
 }
 
@@ -286,7 +286,7 @@ func PrintCreateLanguageStatements(metadataFile *utils.FileWithByteCount, toc *t
 		metadataFile.MustPrint(alterStr)
 		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
 
-		PrintObjectMetadata(metadataFile, toc, procLangMetadata[procLang.GetUniqueID()], procLang, "")
+		PrintObjectMetadata(metadataFile, toc, procLangMetadata[procLang.GetUniqueID()], procLang, "", tier)
 	}
 }
 
@@ -304,7 +304,7 @@ func PrintCreateConversionStatements(metadataFile *utils.FileWithByteCount, toc 
 		section, entry := conversion.GetMetadataEntry()
 		tier := tierMap[conversion.GetUniqueID()]
 		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
-		PrintObjectMetadata(metadataFile, toc, conversionMetadata[conversion.GetUniqueID()], conversion, "")
+		PrintObjectMetadata(metadataFile, toc, conversionMetadata[conversion.GetUniqueID()], conversion, "", tier)
 	}
 }
 
@@ -327,7 +327,7 @@ func PrintCreateForeignDataWrapperStatement(metadataFile *utils.FileWithByteCoun
 	section, entry := fdw.GetMetadataEntry()
 	tier := tierMap[fdw.GetUniqueID()]
 	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
-	PrintObjectMetadata(metadataFile, toc, fdwMetadata, fdw, "")
+	PrintObjectMetadata(metadataFile, toc, fdwMetadata, fdw, "", tier)
 }
 
 func PrintCreateServerStatement(metadataFile *utils.FileWithByteCount, toc *toc.TOC, server ForeignServer, serverMetadata ObjectMetadata) {
@@ -349,7 +349,7 @@ func PrintCreateServerStatement(metadataFile *utils.FileWithByteCount, toc *toc.
 	section, entry := server.GetMetadataEntry()
 	tier := tierMap[server.GetUniqueID()]
 	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
-	PrintObjectMetadata(metadataFile, toc, serverMetadata, server, "")
+	PrintObjectMetadata(metadataFile, toc, serverMetadata, server, "", tier)
 }
 
 func PrintCreateUserMappingStatement(metadataFile *utils.FileWithByteCount, toc *toc.TOC, mapping UserMapping) {

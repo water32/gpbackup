@@ -60,7 +60,7 @@ func PrintCreateDomainStatement(metadataFile *utils.FileWithByteCount, toc *toc.
 	section, entry := domain.GetMetadataEntry()
 	tier := tierMap[domain.GetUniqueID()]
 	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
-	PrintObjectMetadata(metadataFile, toc, typeMetadata, domain, "")
+	PrintObjectMetadata(metadataFile, toc, typeMetadata, domain, "", tier)
 }
 
 func PrintCreateBaseTypeStatement(metadataFile *utils.FileWithByteCount, toc *toc.TOC, base BaseType, typeMetadata ObjectMetadata) {
@@ -136,7 +136,7 @@ func PrintCreateBaseTypeStatement(metadataFile *utils.FileWithByteCount, toc *to
 	section, entry := base.GetMetadataEntry()
 	tier := tierMap[base.GetUniqueID()]
 	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
-	PrintObjectMetadata(metadataFile, toc, typeMetadata, base, "")
+	PrintObjectMetadata(metadataFile, toc, typeMetadata, base, "", tier)
 }
 
 func PrintCreateCompositeTypeStatement(metadataFile *utils.FileWithByteCount, toc *toc.TOC, composite CompositeType, typeMetadata ObjectMetadata) {
@@ -157,18 +157,18 @@ func PrintCreateCompositeTypeStatement(metadataFile *utils.FileWithByteCount, to
 	section, entry := composite.GetMetadataEntry()
 	tier := tierMap[composite.GetUniqueID()]
 	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
-	printPostCreateCompositeTypeStatement(metadataFile, toc, composite, typeMetadata)
+	printPostCreateCompositeTypeStatement(metadataFile, toc, composite, typeMetadata, tier)
 }
 
-func printPostCreateCompositeTypeStatement(metadataFile *utils.FileWithByteCount, toc *toc.TOC, composite CompositeType, typeMetadata ObjectMetadata) {
-	PrintObjectMetadata(metadataFile, toc, typeMetadata, composite, "")
+func printPostCreateCompositeTypeStatement(metadataFile *utils.FileWithByteCount, toc *toc.TOC, composite CompositeType, typeMetadata ObjectMetadata, tier int) {
+	PrintObjectMetadata(metadataFile, toc, typeMetadata, composite, "", tier)
 	statements := make([]string, 0)
 	for _, att := range composite.Attributes {
 		if att.Comment != "" {
 			statements = append(statements, fmt.Sprintf("COMMENT ON COLUMN %s.%s IS %s;", composite.FQN(), att.Name, att.Comment))
 		}
 	}
-	PrintStatements(metadataFile, toc, composite, statements)
+	PrintStatements(metadataFile, toc, composite, statements, tier)
 }
 
 func PrintCreateEnumTypeStatements(metadataFile *utils.FileWithByteCount, toc *toc.TOC, enums []EnumType, typeMetadata MetadataMap) {
@@ -179,7 +179,7 @@ func PrintCreateEnumTypeStatements(metadataFile *utils.FileWithByteCount, toc *t
 		section, entry := enum.GetMetadataEntry()
 		tier := tierMap[enum.GetUniqueID()]
 		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
-		PrintObjectMetadata(metadataFile, toc, typeMetadata[enum.GetUniqueID()], enum, "")
+		PrintObjectMetadata(metadataFile, toc, typeMetadata[enum.GetUniqueID()], enum, "", tier)
 	}
 }
 
@@ -204,7 +204,7 @@ func PrintCreateRangeTypeStatement(metadataFile *utils.FileWithByteCount, toc *t
 	section, entry := rangeType.GetMetadataEntry()
 	tier := tierMap[rangeType.GetUniqueID()]
 	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
-	PrintObjectMetadata(metadataFile, toc, typeMetadata, rangeType, "")
+	PrintObjectMetadata(metadataFile, toc, typeMetadata, rangeType, "", tier)
 }
 
 func PrintCreateCollationStatements(metadataFile *utils.FileWithByteCount, toc *toc.TOC, collations []Collation, collationMetadata MetadataMap) {
@@ -215,6 +215,6 @@ func PrintCreateCollationStatements(metadataFile *utils.FileWithByteCount, toc *
 		section, entry := collation.GetMetadataEntry()
 		tier := tierMap[collation.GetUniqueID()]
 		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
-		PrintObjectMetadata(metadataFile, toc, collationMetadata[collation.GetUniqueID()], collation, "")
+		PrintObjectMetadata(metadataFile, toc, collationMetadata[collation.GetUniqueID()], collation, "", tier)
 	}
 }

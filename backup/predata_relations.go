@@ -93,7 +93,7 @@ func PrintCreateTableStatement(metadataFile *utils.FileWithByteCount, toc *toc.T
 	section, entry := table.GetMetadataEntry()
 	tier := tierMap[table.GetUniqueID()]
 	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
-	PrintPostCreateTableStatements(metadataFile, toc, table, tableMetadata)
+	PrintPostCreateTableStatements(metadataFile, toc, table, tableMetadata, tier)
 }
 
 func PrintRegularTableCreateStatement(metadataFile *utils.FileWithByteCount, toc *toc.TOC, table Table) {
@@ -194,8 +194,8 @@ func printAlterColumnStatements(metadataFile *utils.FileWithByteCount, table Tab
  * This function prints additional statements that come after the CREATE TABLE
  * statement for both regular and external tables.
  */
-func PrintPostCreateTableStatements(metadataFile *utils.FileWithByteCount, toc *toc.TOC, table Table, tableMetadata ObjectMetadata) {
-	PrintObjectMetadata(metadataFile, toc, tableMetadata, table, "")
+func PrintPostCreateTableStatements(metadataFile *utils.FileWithByteCount, toc *toc.TOC, table Table, tableMetadata ObjectMetadata, tier int) {
+	PrintObjectMetadata(metadataFile, toc, tableMetadata, table, "", tier)
 	statements := make([]string, 0)
 	for _, att := range table.ColumnDefs {
 		if att.Comment != "" {
@@ -232,7 +232,7 @@ func PrintPostCreateTableStatements(metadataFile *utils.FileWithByteCount, toc *
 				utils.MakeFQN(alteredPartitionRelation.OldSchema, alteredPartitionRelation.Name), alteredPartitionRelation.NewSchema))
 	}
 
-	PrintStatements(metadataFile, toc, table, statements)
+	PrintStatements(metadataFile, toc, table, statements, tier)
 }
 
 /*
@@ -278,7 +278,7 @@ func PrintCreateSequenceStatements(metadataFile *utils.FileWithByteCount,
 		section, entry := sequence.GetMetadataEntry()
 		tier := tierMap[sequence.GetUniqueID()]
 		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
-		PrintObjectMetadata(metadataFile, toc, sequenceMetadata[sequence.Relation.GetUniqueID()], sequence, "")
+		PrintObjectMetadata(metadataFile, toc, sequenceMetadata[sequence.Relation.GetUniqueID()], sequence, "", tier)
 	}
 }
 
@@ -320,5 +320,5 @@ func PrintCreateViewStatement(metadataFile *utils.FileWithByteCount, toc *toc.TO
 	section, entry := view.GetMetadataEntry()
 	tier := tierMap[view.GetUniqueID()]
 	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
-	PrintObjectMetadata(metadataFile, toc, viewMetadata, view, "")
+	PrintObjectMetadata(metadataFile, toc, viewMetadata, view, "", tier)
 }

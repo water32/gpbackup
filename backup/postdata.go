@@ -41,7 +41,7 @@ func PrintCreateIndexStatements(metadataFile *utils.FileWithByteCount, toc *toc.
 				toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, 0)
 			}
 		}
-		PrintObjectMetadata(metadataFile, toc, indexMetadata[index.GetUniqueID()], index, "")
+		PrintObjectMetadata(metadataFile, toc, indexMetadata[index.GetUniqueID()], index, "", 0)
 	}
 }
 
@@ -53,7 +53,7 @@ func PrintCreateRuleStatements(metadataFile *utils.FileWithByteCount, toc *toc.T
 		section, entry := rule.GetMetadataEntry()
 		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, 0)
 		tableFQN := utils.MakeFQN(rule.OwningSchema, rule.OwningTable)
-		PrintObjectMetadata(metadataFile, toc, ruleMetadata[rule.GetUniqueID()], rule, tableFQN)
+		PrintObjectMetadata(metadataFile, toc, ruleMetadata[rule.GetUniqueID()], rule, tableFQN, 0)
 	}
 }
 
@@ -65,7 +65,7 @@ func PrintCreateTriggerStatements(metadataFile *utils.FileWithByteCount, toc *to
 		section, entry := trigger.GetMetadataEntry()
 		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, 0)
 		tableFQN := utils.MakeFQN(trigger.OwningSchema, trigger.OwningTable)
-		PrintObjectMetadata(metadataFile, toc, triggerMetadata[trigger.GetUniqueID()], trigger, tableFQN)
+		PrintObjectMetadata(metadataFile, toc, triggerMetadata[trigger.GetUniqueID()], trigger, tableFQN, 0)
 	}
 }
 
@@ -100,6 +100,6 @@ func PrintCreateEventTriggerStatements(metadataFile *utils.FileWithByteCount, to
 			metadataFile.MustPrintf("\nALTER EVENT TRIGGER %s %s;", eventTrigger.Name, enableOption)
 			toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, 0)
 		}
-		PrintObjectMetadata(metadataFile, toc, eventTriggerMetadata[eventTrigger.GetUniqueID()], eventTrigger, "")
+		PrintObjectMetadata(metadataFile, toc, eventTriggerMetadata[eventTrigger.GetUniqueID()], eventTrigger, "", 0)
 	}
 }

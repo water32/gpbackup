@@ -57,7 +57,7 @@ type ACL struct {
 type MetadataMap map[UniqueID]ObjectMetadata
 
 func PrintStatements(metadataFile *utils.FileWithByteCount, toc *toc.TOC,
-	obj toc.TOCObject, statements []string) {
+	obj toc.TOCObject, statements []string, tier int) {
 	for _, statement := range statements {
 		start := metadataFile.ByteCount
 		metadataFile.MustPrintf("\n\n%s\n", statement)
@@ -75,12 +75,12 @@ func PrintStatements(metadataFile *utils.FileWithByteCount, toc *toc.TOC,
 				entry.ReferenceObject = entry.Name
 			}
 		}
-		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, 0)
+		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
 	}
 }
 
 func PrintObjectMetadata(metadataFile *utils.FileWithByteCount, toc *toc.TOC,
-	metadata ObjectMetadata, obj toc.TOCObjectWithMetadata, owningTable string) {
+	metadata ObjectMetadata, obj toc.TOCObjectWithMetadata, owningTable string, tier int) {
 	_, entry := obj.GetMetadataEntry()
 	if entry.ObjectType == "DATABASE METADATA" {
 		entry.ObjectType = "DATABASE"
@@ -101,7 +101,7 @@ func PrintObjectMetadata(metadataFile *utils.FileWithByteCount, toc *toc.TOC,
 	if securityLabel := metadata.GetSecurityLabelStatement(obj.FQN(), entry.ObjectType); securityLabel != "" {
 		statements = append(statements, strings.TrimSpace(securityLabel))
 	}
-	PrintStatements(metadataFile, toc, obj, statements)
+	PrintStatements(metadataFile, toc, obj, statements, tier)
 }
 
 // Only print grant statements for any functions that belong to extensions
@@ -127,7 +127,7 @@ func printExtensionFunctionACLs(metadataFile *utils.FileWithByteCount, toc *toc.
 	for _, obj := range objects {
 		if privileges := obj.GetPrivilegesStatements(obj.FQN(), "FUNCTION"); privileges != "" {
 			statements = append(statements, strings.TrimSpace(privileges))
-			PrintStatements(metadataFile, toc, obj, statements)
+			PrintStatements(metadataFile, toc, obj, statements, 0)
 		}
 	}
 }

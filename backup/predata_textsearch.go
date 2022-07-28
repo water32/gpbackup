@@ -32,7 +32,7 @@ func PrintCreateTextSearchParserStatement(metadataFile *utils.FileWithByteCount,
 	section, entry := parser.GetMetadataEntry()
 	tier := tierMap[parser.GetUniqueID()]
 	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
-	PrintObjectMetadata(metadataFile, toc, parserMetadata, parser, "")
+	PrintObjectMetadata(metadataFile, toc, parserMetadata, parser, "", tier)
 }
 
 func PrintCreateTextSearchTemplateStatement(metadataFile *utils.FileWithByteCount, toc *toc.TOC, template TextSearchTemplate, templateMetadata ObjectMetadata) {
@@ -47,7 +47,7 @@ func PrintCreateTextSearchTemplateStatement(metadataFile *utils.FileWithByteCoun
 	section, entry := template.GetMetadataEntry()
 	tier := tierMap[template.GetUniqueID()]
 	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
-	PrintObjectMetadata(metadataFile, toc, templateMetadata, template, "")
+	PrintObjectMetadata(metadataFile, toc, templateMetadata, template, "", tier)
 }
 
 func PrintCreateTextSearchDictionaryStatement(metadataFile *utils.FileWithByteCount, toc *toc.TOC, dictionary TextSearchDictionary, dictionaryMetadata ObjectMetadata) {
@@ -62,7 +62,7 @@ func PrintCreateTextSearchDictionaryStatement(metadataFile *utils.FileWithByteCo
 	section, entry := dictionary.GetMetadataEntry()
 	tier := tierMap[dictionary.GetUniqueID()]
 	toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
-	PrintObjectMetadata(metadataFile, toc, dictionaryMetadata, dictionary, "")
+	PrintObjectMetadata(metadataFile, toc, dictionaryMetadata, dictionary, "", tier)
 }
 
 func PrintCreateTextSearchConfigurationStatement(metadataFile *utils.FileWithByteCount, toc *toc.TOC, configuration TextSearchConfiguration, configurationMetadata ObjectMetadata) {
@@ -87,5 +87,5 @@ func PrintCreateTextSearchConfigurationStatement(metadataFile *utils.FileWithByt
 		metadataFile.MustPrintf("\n\tADD MAPPING FOR \"%s\" WITH %s;", token, strings.Join(dicts, ", "))
 		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
 	}
-	PrintObjectMetadata(metadataFile, toc, configurationMetadata, configuration, "")
+	PrintObjectMetadata(metadataFile, toc, configurationMetadata, configuration, "", tier)
 }
