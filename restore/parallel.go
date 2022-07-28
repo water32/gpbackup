@@ -54,13 +54,14 @@ func ExecuteStatements(statements []toc.StatementWithType, progressBar utils.Pro
 	var workerPool sync.WaitGroup
 	var fatalErr error
 	var numErrors int32
+
 	if len(statements) == 0 {
 		return 0
 	}
 	if !executeInParallel {
 		tasks := make(chan toc.StatementWithType, len(statements))
 		for _, statement := range statements {
-				tasks <- statement
+			tasks <- statement
 		}
 		close(tasks)
 		connNum := connectionPool.ValidateConnNum(whichConn...)
@@ -69,10 +70,10 @@ func ExecuteStatements(statements []toc.StatementWithType, progressBar utils.Pro
 		splitStatements := make(map[int][]toc.StatementWithType, connectionPool.NumConns)
 		currentWorker := 0
 		splitStatements[0] = append(splitStatements[0], statements[0])
-		for i := 0; i < len(statements) - 1; i++ {
+		for i := 0; i < len(statements)-1; i++ {
 			if statements[i].TypeIsEqual(statements[i+1]) {
 				splitStatements[currentWorker] = append(splitStatements[currentWorker], statements[i+1])
-			}	else {
+			} else {
 				currentWorker++
 				if currentWorker == connectionPool.NumConns {
 					currentWorker = 0
@@ -80,39 +81,19 @@ func ExecuteStatements(statements []toc.StatementWithType, progressBar utils.Pro
 				splitStatements[currentWorker] = append(splitStatements[currentWorker], statements[i+1])
 			}
 		}
-		chanMap := make(map[int] chan toc.StatementWithType, connectionPool.NumConns)
+		chanMap := make(map[int]chan toc.StatementWithType, connectionPool.NumConns)
 		for i := 0; i < connectionPool.NumConns; i++ {
-			chanMap[i] = make(chan toc.StatementWithType,len(splitStatements[i]) )
+			chanMap[i] = make(chan toc.StatementWithType, len(splitStatements[i]))
 			for _, statement := range splitStatements[i] {
 				chanMap[i] <- statement
-			}		
-		}
-		for worker, statement := range chanMap {
+			}
+			close(chanMap[i])
 			workerPool.Add(1)
-			go func(connNum int, statements chan toc.StatementWithType) {
+			go func(connNum int) {
 				defer workerPool.Done()
 				connNum = connectionPool.ValidateConnNum(connNum)
-				for statement := range statements {
-					if wasTerminated || fatalErr != nil {
-						return
-					}
-					_, err := connectionPool.Exec(statement.Statement, connNum)
-					if err != nil {
-							gplog.Verbose("Error encountered when executing statement: %s Error was: %s", statement.Schema+"."+statement.Name, err.Error())
-						}
-					if fatalErr != nil {
-						fmt.Println("")
-						gplog.Fatal(fatalErr, "")
-						gplog.Verbose(statement.Statement)
-					} else {
-						progressBar.Increment()
-					}	
-				}
-
-			}(worker, statement)
-		}
-		for _, c := range chanMap {
-			close(c)
+				executeStatementsForConn(chanMap[connNum], &fatalErr, &numErrors, progressBar, connNum, executeInParallel)
+			}(i)
 		}
 		workerPool.Wait()
 	}
@@ -181,7 +162,7 @@ func BatchPredataStatements(statements []toc.StatementWithType) ([]toc.Statement
 		if statement.Tier > 0 {
 			foundNumberedTier = true
 			numberedTiers[statement.Tier] = append(numberedTiers[statement.Tier], statement)
-		}	else if statement.Tier == 0 {
+		} else if statement.Tier == 0 {
 			if !foundNumberedTier {
 				// insert into firstTierZero
 				firstTierZero = append(firstTierZero, statement)
@@ -189,8 +170,7 @@ func BatchPredataStatements(statements []toc.StatementWithType) ([]toc.Statement
 				// insert into secondTierZero
 				secondTierZero = append(secondTierZero, statement)
 			}
-		}  
+		}
 	}
 	return firstTierZero, numberedTiers, secondTierZero
 }
-
