@@ -571,7 +571,8 @@ func backupDependentObjects(metadataFile *utils.FileWithByteCount, tables []Tabl
 	if connectionPool.Version.Is("4") && !tableOnly {
 		AddProtocolDependenciesForGPDB4(relevantDeps, tables, protocols)
 	}
-	sortedSlice := TopologicalSort(sortables, relevantDeps)
+	sortedSlice, tierMap := TopologicalSort(sortables, relevantDeps)
+	gplog.Info("%d", len(tierMap))
 
 	PrintDependentObjectStatements(metadataFile, globalTOC, sortedSlice, filteredMetadata, constraints, funcInfoMap)
 	PrintAlterSequenceStatements(metadataFile, globalTOC, sequences)

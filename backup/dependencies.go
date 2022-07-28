@@ -85,7 +85,7 @@ type Sortable interface {
 	GetUniqueID() UniqueID
 }
 
-func TopologicalSort(slice []Sortable, dependencies DependencyMap) []Sortable {
+func TopologicalSort(slice []Sortable, dependencies DependencyMap) ([]Sortable, map[UniqueID]int) {
 	inDegrees := make(map[UniqueID]int)
 	dependencyIndexes := make(map[UniqueID]int)
 	isDependentOn := make(map[UniqueID][]UniqueID)
@@ -93,31 +93,43 @@ func TopologicalSort(slice []Sortable, dependencies DependencyMap) []Sortable {
 	sorted := make([]Sortable, 0)
 	notVisited := make(map[UniqueID]bool)
 	nameForUniqueID := make(map[UniqueID]string)
+	tierMap := make(map[UniqueID]int)
+	nextTier := make([]Sortable, 0)
+	tierCount := 1
 	for i, item := range slice {
 		uniqueID := item.GetUniqueID()
 		nameForUniqueID[uniqueID] = item.FQN()
 		deps := dependencies[uniqueID]
-		notVisited[uniqueID] = true
-		inDegrees[uniqueID] = len(deps)
-		for dep := range deps {
-			isDependentOn[dep] = append(isDependentOn[dep], uniqueID)
+		notVisited[uniqueID] = true     // Mark item as not visited
+		inDegrees[uniqueID] = len(deps) // Mark item's inDegrees (number of deps)
+		for dep := range deps {         // For each dependency, add to isDependentOn list
+			isDependentOn[dep] = append(isDependentOn[dep], uniqueID) // Save list of dependency indexes so we can look at them later
 		}
 		dependencyIndexes[uniqueID] = i
-		if len(deps) == 0 {
+		if len(deps) == 0 { // If item has 0 dependencies, add to queue
 			queue = append(queue, item)
 		}
 	}
-	for len(queue) > 0 {
+	STAGE2: for len(queue) > 0 {
 		item := queue[0]
+		UniqueID := item.GetUniqueID()
 		queue = queue[1:]
+		tierMap[UniqueID] = tierCount
+		gplog.Info("setting tier of %s to %d", item.FQN(), tierCount)
 		sorted = append(sorted, item)
 		notVisited[item.GetUniqueID()] = false
 		for _, dep := range isDependentOn[item.GetUniqueID()] {
 			inDegrees[dep]--
 			if inDegrees[dep] == 0 {
-				queue = append(queue, slice[dependencyIndexes[dep]])
+				nextTier = append(nextTier, slice[dependencyIndexes[dep]])
+				gplog.Info("nextTier size: %d", len(nextTier))
 			}
 		}
+	}
+	if len(nextTier) > 0 {
+		queue = nextTier
+		nextTier = make([]Sortable, 0)
+		goto STAGE2
 	}
 	if len(slice) != len(sorted) {
 		gplog.Verbose("Failed to sort dependencies.")
@@ -133,7 +145,7 @@ func TopologicalSort(slice []Sortable, dependencies DependencyMap) []Sortable {
 		}
 		gplog.Fatal(errors.Errorf("Dependency resolution failed; see log file %s for details. This is a bug, please report.", gplog.GetLogFilePath()), "")
 	}
-	return sorted
+	return sorted, tierMap
 }
 
 type DependencyMap map[UniqueID]map[UniqueID]bool
