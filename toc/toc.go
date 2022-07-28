@@ -281,3 +281,14 @@ func (toc *SegmentTOC) AddSegmentDataEntry(oid uint, startByte uint64, endByte u
 	// We use uint for oid since the flags package does not have a uint32 flag
 	toc.DataEntries[oid] = SegmentDataEntry{startByte, endByte}
 }
+
+func (s StatementWithType) TypeIsEqual(statement StatementWithType) bool {
+	if s.Schema == statement.Schema && 
+		 s.Name == statement.Name && 
+		 s.ObjectType == statement.ObjectType &&
+		 s.ReferenceObject == statement.ReferenceObject && 
+		 s.Tier == statement.Tier {
+			 return true
+		 }
+		 return false
+}

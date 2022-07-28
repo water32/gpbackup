@@ -297,8 +297,8 @@ func restorePredata(metadataFilename string) {
 		// batch statements by tier
 		first, tiered, second := BatchPredataStatements(statements)
 		numErrors = ExecuteRestoreMetadataStatements(first, "Pre-data objects", progressBar, utils.PB_VERBOSE, false)
-		for _, tier := range tiered {
-			numErrors += ExecuteRestoreMetadataStatements(tier, "Pre-data objects", progressBar, utils.PB_VERBOSE, true)
+		for t := 1; t <= len(tiered); t++ {
+			numErrors += ExecuteRestoreMetadataStatements(tiered[t], "Pre-data objects", progressBar, utils.PB_VERBOSE, true)
 		}
 		numErrors += ExecuteRestoreMetadataStatements(second, "Pre-data objects", progressBar, utils.PB_VERBOSE, false)
 	} else {
