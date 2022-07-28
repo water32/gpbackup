@@ -102,6 +102,7 @@ type StatementWithType struct {
 	ObjectType      string
 	ReferenceObject string
 	Statement       string
+	Tier						int
 }
 
 func GetIncludedPartitionRoots(tocDataEntries []MasterDataEntry, includeRelations []string) []string {
@@ -136,7 +137,7 @@ func (toc *TOC) GetSQLStatementForObjectTypes(section string, metadataFile io.Re
 			contents := make([]byte, entry.EndByte-entry.StartByte)
 			_, err := metadataFile.ReadAt(contents, int64(entry.StartByte))
 			gplog.FatalOnError(err)
-			statements = append(statements, StatementWithType{Schema: entry.Schema, Name: entry.Name, ObjectType: entry.ObjectType, ReferenceObject: entry.ReferenceObject, Statement: string(contents)})
+			statements = append(statements, StatementWithType{Schema: entry.Schema, Name: entry.Name, ObjectType: entry.ObjectType, ReferenceObject: entry.ReferenceObject, Statement: string(contents), Tier: entry.Tier})
 		}
 	}
 	return statements
