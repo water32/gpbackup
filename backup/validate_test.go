@@ -62,11 +62,13 @@ var _ = Describe("backup/validate tests", func() {
 	})
 	Describe("ValidateTablesExist", func() {
 		var tableRows, partitionTables, schemaAndTable, schemaAndTable2 *sqlmock.Rows
+		// var backupCmdFlags *pflag.FlagSet
 		BeforeEach(func() {
 			tableRows = sqlmock.NewRows([]string{"oid", "name"})
 			schemaAndTable = sqlmock.NewRows([]string{"schemaname", "tablename"})
 			schemaAndTable2 = sqlmock.NewRows([]string{"schemaname", "tablename"})
 			partitionTables = sqlmock.NewRows([]string{"oid", "level", "rootname"})
+			// backupCmdFlags = pflag.NewFlagSet("gpbackup", pflag.ExitOnError)
 		})
 		Context("Non-partition tables", func() {
 			It("passes if there are no filter tables", func() {
@@ -76,7 +78,6 @@ var _ = Describe("backup/validate tests", func() {
 				// Added to handle call to `quote_ident`
 				schemaAndTable.AddRow("public", "table1")
 				mock.ExpectQuery("SELECT (.*)").WillReturnRows(schemaAndTable)
-				//
 				tableRows.AddRow("1", "public.table1")
 				mock.ExpectQuery("SELECT (.*)").WillReturnRows(tableRows)
 				mock.ExpectQuery("SELECT (.*)").WillReturnRows(partitionTables)
