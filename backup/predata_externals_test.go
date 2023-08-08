@@ -5,6 +5,7 @@ import (
 
 	"github.com/greenplum-db/gp-common-go-libs/testhelper"
 	"github.com/greenplum-db/gpbackup/backup"
+	"github.com/greenplum-db/gpbackup/options"
 	"github.com/greenplum-db/gpbackup/testutils"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -84,7 +85,7 @@ var _ = Describe("backup/predata_externals tests", func() {
 		var extTableDef backup.ExternalTableDefinition
 		BeforeEach(func() {
 			testTable = backup.Table{
-				Relation:        backup.Relation{Schema: "public", Name: "tablename"},
+				Relation:        options.Relation{Schema: "public", Name: "tablename"},
 				TableDefinition: backup.TableDefinition{DistPolicy: "DISTRIBUTED RANDOMLY", PartDef: "", PartTemplateDef: "", StorageOpts: "", TablespaceName: "", ColumnDefs: []backup.ColumnDefinition{}, IsExternal: true, ExtTableDef: extTableEmpty}}
 			extTableDef = extTableEmpty
 		})
@@ -519,8 +520,8 @@ GRANT ALL ON PROTOCOL s3 TO testrole;`}
 	})
 	Describe("PrintExchangeExternalPartitionStatements", func() {
 		tables := []backup.Table{
-			{Relation: backup.Relation{Oid: 1, Schema: "public", Name: "partition_table_ext_part_"}},
-			{Relation: backup.Relation{Oid: 2, Schema: "public", Name: "partition_table"}},
+			{Relation: options.Relation{Oid: 1, Schema: "public", Name: "partition_table_ext_part_"}},
+			{Relation: options.Relation{Oid: 2, Schema: "public", Name: "partition_table"}},
 		}
 		emptyPartInfoMap := make(map[uint32]backup.PartitionInfo)
 		It("writes an alter statement for a named partition", func() {

@@ -114,7 +114,7 @@ func (c Constraint) FQN() string {
 	return c.Name
 }
 
-func GetConstraints(connectionPool *dbconn.DBConn, includeTables ...Relation) []Constraint {
+func GetConstraints(connectionPool *dbconn.DBConn, includeTables ...options.Relation) []Constraint {
 
 	// ConIsLocal should always return true from GetConstraints because we
 	// filter out constraints that are inherited using the INHERITS clause, or

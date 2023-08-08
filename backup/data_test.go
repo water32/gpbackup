@@ -47,7 +47,7 @@ var _ = Describe("backup/data tests", func() {
 			rowsCopiedMaps = make([]map[uint32]int64, connectionPool.NumConns)
 			columnDefs := []backup.ColumnDefinition{{Oid: 1, Name: "a"}}
 			table = backup.Table{
-				Relation:        backup.Relation{Oid: 1, Schema: "public", Name: "table"},
+				Relation:        options.Relation{Oid: 1, Schema: "public", Name: "table"},
 				TableDefinition: backup.TableDefinition{ColumnDefs: columnDefs},
 			}
 		})
@@ -72,7 +72,7 @@ var _ = Describe("backup/data tests", func() {
 		})
 	})
 	Describe("CopyTableOut", func() {
-		testTable := backup.Table{Relation: backup.Relation{SchemaOid: 2345, Oid: 3456, Schema: "public", Name: "foo"}}
+		testTable := backup.Table{Relation: options.Relation{SchemaOid: 2345, Oid: 3456, Schema: "public", Name: "foo"}}
 		It("will back up a table to its own file with gzip compression", func() {
 			utils.SetPipeThroughProgram(utils.PipeThroughProgram{Name: "gzip", OutputCommand: "gzip -c -8", InputCommand: "gzip -d -c", Extension: ".gz"})
 			execStr := regexp.QuoteMeta("COPY public.foo TO PROGRAM 'gzip -c -8 > <SEG_DATA_DIR>/backups/20170101/20170101010101/gpbackup_<SEGID>_20170101010101_3456.gz' WITH CSV DELIMITER ',' ON SEGMENT IGNORE EXTERNAL PARTITIONS;")
@@ -162,7 +162,7 @@ var _ = Describe("backup/data tests", func() {
 		)
 		BeforeEach(func() {
 			testTable = backup.Table{
-				Relation:        backup.Relation{Oid: 0, Schema: "public", Name: "testtable"},
+				Relation:        options.Relation{Oid: 0, Schema: "public", Name: "testtable"},
 				TableDefinition: backup.TableDefinition{IsExternal: false},
 			}
 			_ = cmdFlags.Set(options.SINGLE_DATA_FILE, "false")
@@ -204,7 +204,7 @@ var _ = Describe("backup/data tests", func() {
 			config.MetadataOnly = false
 			backup.SetReport(&report.Report{BackupConfig: config})
 			testTable = backup.Table{
-				Relation:        backup.Relation{Schema: "public", Name: "testtable"},
+				Relation:        options.Relation{Schema: "public", Name: "testtable"},
 				TableDefinition: backup.TableDefinition{},
 			}
 		})

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/greenplum-db/gpbackup/backup"
+	"github.com/greenplum-db/gpbackup/options"
 	"github.com/greenplum-db/gpbackup/testutils"
 	"github.com/lib/pq"
 
@@ -44,11 +45,11 @@ var _ = Describe("backup/statistics tests", func() {
 		It("prints tuple stats and attr stats for all tables", func() {
 			tocfile, backupfile = testutils.InitializeTestTOC(buffer, "statistics")
 
-			testTable1 := backup.Table{Relation: backup.Relation{Oid: 123, Schema: "testschema", Name: "testtable1"}}
+			testTable1 := backup.Table{Relation: options.Relation{Oid: 123, Schema: "testschema", Name: "testtable1"}}
 			tupleStat1 := backup.TupleStatistic{Schema: "testschema", Table: "testtable1"}
 			attStat1 := []backup.AttributeStatistic{}
 
-			testTable2 := backup.Table{Relation: backup.Relation{Oid: 456, Schema: "testschema", Name: "testtable2"}}
+			testTable2 := backup.Table{Relation: options.Relation{Oid: 456, Schema: "testschema", Name: "testtable2"}}
 			tupleStat2 := backup.TupleStatistic{Schema: "testschema", Table: "testtable2"}
 			attStat2 := []backup.AttributeStatistic{
 				{Schema: "testschema", Table: "testtable2", AttName: "testattWithArray", Type: "_array"},
@@ -144,7 +145,7 @@ WHERE oid = 'testschema.testtable2'::regclass::oid;`,
 	})
 	Describe("GenerateTupleStatisticsQuery", func() {
 		It("generates tuple statistics query with double quotes and a single quote in the table name and schema name", func() {
-			tableTestTable := backup.Table{Relation: backup.Relation{Schema: `"""test'schema"""`, Name: `"""test'table"""`}}
+			tableTestTable := backup.Table{Relation: options.Relation{Schema: `"""test'schema"""`, Name: `"""test'table"""`}}
 			tupleStats := backup.TupleStatistic{Schema: `"""test'schema"""`, Table: `"""test'table"""`}
 			tupleQuery := backup.GenerateTupleStatisticsQuery(tableTestTable, tupleStats)
 			Expect(tupleQuery).To(Equal(`UPDATE pg_class
@@ -156,7 +157,7 @@ WHERE oid = '"""test''schema"""."""test''table"""'::regclass::oid;`))
 
 	})
 	Describe("GenerateAttributeStatisticsQueries", func() {
-		tableTestTable := backup.Table{Relation: backup.Relation{Schema: "testschema", Name: `"test'table"`}}
+		tableTestTable := backup.Table{Relation: options.Relation{Schema: "testschema", Name: `"test'table"`}}
 
 		It("generates attribute statistics query for array type", func() {
 			attStats := backup.AttributeStatistic{Schema: "testschema", Table: "testtable", AttName: "testatt", Type: "_array", Relid: 2,

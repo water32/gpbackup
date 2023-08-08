@@ -6,6 +6,7 @@ import (
 	"github.com/greenplum-db/gp-common-go-libs/structmatcher"
 	"github.com/greenplum-db/gp-common-go-libs/testhelper"
 	"github.com/greenplum-db/gpbackup/backup"
+	"github.com/greenplum-db/gpbackup/options"
 	"github.com/greenplum-db/gpbackup/testutils"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -14,7 +15,7 @@ import (
 
 var _ = Describe("backup integration tests", func() {
 	tables := []backup.Table{
-		{Relation: backup.Relation{Schema: "public", Name: "foo"}},
+		{Relation: options.Relation{Schema: "public", Name: "foo"}},
 	}
 	var tableOid uint32
 	BeforeEach(func() {

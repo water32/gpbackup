@@ -8,6 +8,7 @@ import (
 	"github.com/greenplum-db/gp-common-go-libs/structmatcher"
 	"github.com/greenplum-db/gp-common-go-libs/testhelper"
 	"github.com/greenplum-db/gpbackup/backup"
+	"github.com/greenplum-db/gpbackup/options"
 	"github.com/greenplum-db/gpbackup/testutils"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -19,7 +20,7 @@ var _ = Describe("backup/predata_acl tests", func() {
 		tocfile, backupfile = testutils.InitializeTestTOC(buffer, "predata")
 	})
 	Describe("PrintObjectMetadata", func() {
-		table := backup.Table{Relation: backup.Relation{Schema: "public", Name: "tablename"}}
+		table := backup.Table{Relation: options.Relation{Schema: "public", Name: "tablename"}}
 		hasAllPrivileges := testutils.DefaultACLForType("anothertestrole", "TABLE")
 		hasMostPrivileges := testutils.DefaultACLForType("testrole", "TABLE")
 		hasMostPrivileges.Trigger = false
@@ -163,7 +164,7 @@ REVOKE ALL ON FUNCTION public.testagg(*) FROM testrole;`)
 		})
 		Context("Views and sequences have owners", func() {
 			view := backup.View{Schema: "public", Name: "viewname"}
-			sequence := backup.Sequence{Relation: backup.Relation{Schema: "public", Name: "sequencename"}}
+			sequence := backup.Sequence{Relation: options.Relation{Schema: "public", Name: "sequencename"}}
 			objectMetadata := backup.ObjectMetadata{Owner: "testrole"}
 
 			It("prints an ALTER TABLE ... OWNER TO statement to set the owner for a sequence", func() {

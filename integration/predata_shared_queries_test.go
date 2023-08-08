@@ -253,12 +253,12 @@ PARTITION BY RANGE (date)
 
 				constraintsOid := testutils.OidFromObjectName(connectionPool, "public", "constraints_table", backup.TYPE_RELATION)
 				otherOid := testutils.OidFromObjectName(connectionPool, "public", "other_table", backup.TYPE_RELATION)
-				tables := []backup.Relation{{Oid: constraintsOid, Schema: "public", Name: "constraints_table"}}
+				tables := []options.Relation{{Oid: constraintsOid, Schema: "public", Name: "constraints_table"}}
 				constraints := backup.GetConstraints(connectionPool, tables...)
 				Expect(constraints).To(HaveLen(1))
 				structmatcher.ExpectStructsToMatchExcluding(&constraints[0], &uniqueConstraint, "Oid")
 
-				tables = []backup.Relation{{Oid: otherOid, Schema: "public", Name: "other_table"}}
+				tables = []options.Relation{{Oid: otherOid, Schema: "public", Name: "other_table"}}
 				constraints = backup.GetConstraints(connectionPool, tables...)
 				Expect(constraints).To(BeEmpty())
 			})

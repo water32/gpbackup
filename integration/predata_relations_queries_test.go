@@ -30,9 +30,9 @@ var _ = Describe("backup integration tests", func() {
 
 			tables := backup.GetIncludedUserTableRelations(connectionPool, []options.Relation{})
 
-			tableFoo := backup.Relation{Schema: "public", Name: "foo"}
+			tableFoo := options.Relation{Schema: "public", Name: "foo"}
 
-			tableTestTable := backup.Relation{Schema: "testschema", Name: "testtable"}
+			tableTestTable := options.Relation{Schema: "testschema", Name: "testtable"}
 
 			Expect(tables).To(HaveLen(2))
 			structmatcher.ExpectStructsToMatchExcluding(&tableFoo, &tables[0], "SchemaOid", "Oid")
@@ -52,7 +52,7 @@ PARTITION BY LIST (gender)
 
 				tables := backup.GetIncludedUserTableRelations(connectionPool, []options.Relation{})
 
-				tableRank := backup.Relation{Schema: "public", Name: "rank"}
+				tableRank := options.Relation{Schema: "public", Name: "rank"}
 
 				if connectionPool.Version.Before("7") {
 					Expect(tables).To(HaveLen(1))
@@ -75,8 +75,7 @@ PARTITION BY LIST (gender)
 				testhelper.AssertQueryRuns(connectionPool, createStmt)
 				defer testhelper.AssertQueryRuns(connectionPool, "DROP TABLE public.rank")
 
-				optTables := backup.GetIncludedUserTableRelations(connectionPool, []options.Relation{})
-				tables := backup.ConvertRelationsOptionsToBackup(optTables)
+				tables := backup.GetIncludedUserTableRelations(connectionPool, []options.Relation{})
 
 				expectedTableNames := []string{"public.rank", "public.rank_1_prt_boys", "public.rank_1_prt_girls", "public.rank_1_prt_other"}
 				tableNames := make([]string, 0)
@@ -100,7 +99,7 @@ PARTITION BY LIST (gender)
 			_ = backupCmdFlags.Set(options.INCLUDE_SCHEMA, "testschema")
 			tables := backup.GetIncludedUserTableRelations(connectionPool, []options.Relation{})
 
-			tableFoo := backup.Relation{Schema: "testschema", Name: "foo"}
+			tableFoo := options.Relation{Schema: "testschema", Name: "foo"}
 
 			Expect(tables).To(HaveLen(1))
 			structmatcher.ExpectStructsToMatchIncluding(&tableFoo, &tables[0], "Name", "Schema")
@@ -127,7 +126,7 @@ PARTITION BY LIST (gender)
 			}
 			tables := backup.GetIncludedUserTableRelations(connectionPool, includeRelationsFqn)
 
-			tableFoo := backup.Relation{Schema: "testschema", Name: "bar"}
+			tableFoo := options.Relation{Schema: "testschema", Name: "bar"}
 
 			Expect(tables).To(HaveLen(1))
 			structmatcher.ExpectStructsToMatchIncluding(&tableFoo, &tables[0], "Name", "Schema")
@@ -149,7 +148,7 @@ PARTITION BY LIST (gender)
 			backup.ValidateAndProcessFilterLists(opts)
 			tables := backup.GetIncludedUserTableRelations(connectionPool, []options.Relation{})
 
-			tableFoo := backup.Relation{Schema: "public", Name: "foo"}
+			tableFoo := options.Relation{Schema: "public", Name: "foo"}
 
 			Expect(tables).To(HaveLen(1))
 			structmatcher.ExpectStructsToMatchIncluding(&tableFoo, &tables[0], "Name", "Schema")
@@ -174,7 +173,7 @@ PARTITION BY LIST (gender)
 			backup.ValidateAndProcessFilterLists(opts)
 			tables := backup.GetIncludedUserTableRelations(connectionPool, []options.Relation{})
 
-			tableFoo := backup.Relation{Schema: "testschema", Name: "bar"}
+			tableFoo := options.Relation{Schema: "testschema", Name: "bar"}
 			Expect(tables).To(HaveLen(1))
 			structmatcher.ExpectStructsToMatchIncluding(&tableFoo, &tables[0], "Name", "Schema")
 		})
@@ -185,7 +184,7 @@ PARTITION BY LIST (gender)
 			_ = backupCmdFlags.Set(options.EXCLUDE_RELATION, "testschema.nonexistant")
 			tables := backup.GetIncludedUserTableRelations(connectionPool, []options.Relation{})
 
-			tableFoo := backup.Relation{Schema: "public", Name: "foo"}
+			tableFoo := options.Relation{Schema: "public", Name: "foo"}
 
 			Expect(tables).To(HaveLen(1))
 			structmatcher.ExpectStructsToMatchIncluding(&tableFoo, &tables[0], "Name", "Schema")
@@ -203,8 +202,8 @@ PARTITION BY LIST (gender)
 
 			sequences := backup.GetAllSequences(connectionPool)
 
-			mySequence := backup.Relation{Schema: "public", Name: "my_sequence"}
-			mySequence2 := backup.Relation{Schema: "testschema", Name: "my_sequence2"}
+			mySequence := options.Relation{Schema: "public", Name: "my_sequence"}
+			mySequence2 := options.Relation{Schema: "testschema", Name: "my_sequence2"}
 
 			Expect(sequences).To(HaveLen(2))
 			structmatcher.ExpectStructsToMatchIncluding(&mySequence, &sequences[0], "Name", "Schema")
@@ -217,7 +216,7 @@ PARTITION BY LIST (gender)
 			testhelper.AssertQueryRuns(connectionPool, "CREATE SCHEMA testschema")
 			defer testhelper.AssertQueryRuns(connectionPool, "DROP SCHEMA testschema CASCADE")
 			testhelper.AssertQueryRuns(connectionPool, "CREATE SEQUENCE testschema.my_sequence")
-			mySequence := backup.Relation{Schema: "testschema", Name: "my_sequence"}
+			mySequence := options.Relation{Schema: "testschema", Name: "my_sequence"}
 
 			_ = backupCmdFlags.Set(options.INCLUDE_SCHEMA, "testschema")
 			sequences := backup.GetAllSequences(connectionPool)
@@ -246,7 +245,7 @@ PARTITION BY LIST (gender)
 			testhelper.AssertQueryRuns(connectionPool, "CREATE TABLE public.seq_table(i int)")
 			defer testhelper.AssertQueryRuns(connectionPool, "DROP TABLE public.seq_table")
 			testhelper.AssertQueryRuns(connectionPool, "ALTER SEQUENCE public.my_sequence OWNED BY public.seq_table.i")
-			mySequence := backup.Relation{Schema: "public", Name: "my_sequence"}
+			mySequence := options.Relation{Schema: "public", Name: "my_sequence"}
 
 			_ = backupCmdFlags.Set(options.EXCLUDE_RELATION, "public.seq_table")
 			opts, err := options.NewOptions(backupCmdFlags)
@@ -263,7 +262,7 @@ PARTITION BY LIST (gender)
 			testhelper.AssertQueryRuns(connectionPool, "CREATE SEQUENCE public.sequence2 START 10")
 			defer testhelper.AssertQueryRuns(connectionPool, "DROP SEQUENCE public.sequence2")
 
-			sequence2 := backup.Relation{Schema: "public", Name: "sequence2"}
+			sequence2 := options.Relation{Schema: "public", Name: "sequence2"}
 
 			_ = backupCmdFlags.Set(options.EXCLUDE_RELATION, "public.sequence1")
 			opts, err := options.NewOptions(backupCmdFlags)
@@ -280,7 +279,7 @@ PARTITION BY LIST (gender)
 			testhelper.AssertQueryRuns(connectionPool, "CREATE SEQUENCE public.sequence2 START 10")
 			defer testhelper.AssertQueryRuns(connectionPool, "DROP SEQUENCE public.sequence2")
 
-			sequence1 := backup.Relation{Schema: "public", Name: "sequence1"}
+			sequence1 := options.Relation{Schema: "public", Name: "sequence1"}
 			_ = backupCmdFlags.Set(options.INCLUDE_RELATION, "public.sequence1")
 			opts, err := options.NewOptions(backupCmdFlags)
 			Expect(err).NotTo(HaveOccurred())
@@ -418,10 +417,10 @@ PARTITION BY LIST (gender)
 			testhelper.AssertQueryRuns(connectionPool, "CREATE SEQUENCE public.seq_two START 7")
 			defer testhelper.AssertQueryRuns(connectionPool, "DROP SEQUENCE public.seq_two")
 
-			seqOneRelation := backup.Relation{Schema: "public", Name: "seq_one"}
+			seqOneRelation := options.Relation{Schema: "public", Name: "seq_one"}
 
 			seqOneDef := backup.SequenceDefinition{LastVal: 3, Increment: 1, MaxVal: math.MaxInt64, MinVal: 1, CacheVal: 1, StartVal: startValOne}
-			seqTwoRelation := backup.Relation{Schema: "public", Name: "seq_two"}
+			seqTwoRelation := options.Relation{Schema: "public", Name: "seq_two"}
 			seqTwoDef := backup.SequenceDefinition{LastVal: 7, Increment: 1, MaxVal: math.MaxInt64, MinVal: 1, CacheVal: 1, StartVal: startValTwo}
 			if connectionPool.Version.AtLeast("7") {
 				// In GPDB 7+, default cache value is 20

@@ -17,7 +17,7 @@ import (
 )
 
 type Table struct {
-	Relation
+	options.Relation
 	TableDefinition
 }
 
@@ -88,7 +88,7 @@ type TableDefinition struct {
  * single table and assembles the metadata into ColumnDef and TableDef structs
  * for more convenient handling in the PrintCreateTableStatement() function.
  */
-func ConstructDefinitionsForTables(connectionPool *dbconn.DBConn, tableRelations []Relation) []Table {
+func ConstructDefinitionsForTables(connectionPool *dbconn.DBConn, tableRelations []options.Relation) []Table {
 	tables := make([]Table, 0)
 
 	gplog.Info("Gathering additional table metadata")
@@ -625,7 +625,7 @@ type Dependency struct {
 	ReferencedObject string
 }
 
-func GetTableInheritance(connectionPool *dbconn.DBConn, tables []Relation) map[uint32][]string {
+func GetTableInheritance(connectionPool *dbconn.DBConn, tables []options.Relation) map[uint32][]string {
 	tableFilterStr := ""
 	if len(MustGetFlagStringArray(options.INCLUDE_RELATION)) > 0 {
 		tableOidList := make([]string, len(tables))

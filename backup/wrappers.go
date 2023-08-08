@@ -205,8 +205,7 @@ func createBackupDirectoriesOnAllHosts() {
  */
 
 func RetrieveAndProcessTables() ([]Table, []Table) {
-	includedRelations := GetIncludedUserTableRelations(connectionPool, IncludedRelationFqns)
-	tableRelations := ConvertRelationsOptionsToBackup(includedRelations)
+	tableRelations := GetIncludedUserTableRelations(connectionPool, IncludedRelationFqns)
 
 	LockTables(connectionPool, tableRelations)
 
@@ -273,7 +272,7 @@ func retrieveAndBackupTypes(metadataFile *utils.FileWithByteCount, sortables *[]
 	addToMetadataMap(typeMetadata, metadataMap)
 }
 
-func retrieveConstraints(sortables *[]Sortable, metadataMap MetadataMap, tables ...Relation) []Constraint {
+func retrieveConstraints(sortables *[]Sortable, metadataMap MetadataMap, tables ...options.Relation) []Constraint {
 	gplog.Verbose("Retrieving constraints")
 	constraints := GetConstraints(connectionPool, tables...)
 	if len(constraints) > 0 && connectionPool.Version.AtLeast("7") {

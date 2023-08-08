@@ -52,40 +52,8 @@ func GetIncludedUserTableRelations(connectionPool *dbconn.DBConn, includedRelati
 	return getUserTableRelations(connectionPool)
 }
 
-type Relation struct {
-	SchemaOid uint32
-	Oid       uint32
-	Schema    string
-	Name      string
-}
-
-func (r Relation) FQN() string {
-	return utils.MakeFQN(r.Schema, r.Name)
-}
-
-func (r Relation) GetUniqueID() UniqueID {
+func GetUniqueID(r options.Relation) UniqueID {
 	return UniqueID{ClassID: PG_CLASS_OID, Oid: r.Oid}
-}
-
-/*
- * Due to the structure of our codebase, we have two identical versions of the Relation struct.
- * Convert explicitly to keep the compiler happy.
- *
- * TODO -- find a way to remove this and just have one version of this struct.
- */
-func ConvertRelationsOptionsToBackup(inRelations []options.Relation) []Relation {
-	outRelations := make([]Relation, len(inRelations))
-
-	for idx, inRel := range inRelations {
-		outRel := Relation{
-			SchemaOid: inRel.SchemaOid,
-			Oid:       inRel.Oid,
-			Schema:    inRel.Schema,
-			Name:      inRel.Name,
-		}
-		outRelations[idx] = outRel
-	}
-	return outRelations
 }
 
 /*
@@ -158,7 +126,7 @@ func getUserTableRelationsWithIncludeFiltering(connectionPool *dbconn.DBConn, in
 	return results
 }
 
-func GetForeignTableRelations(connectionPool *dbconn.DBConn) []Relation {
+func GetForeignTableRelations(connectionPool *dbconn.DBConn) []options.Relation {
 	query := fmt.Sprintf(`
 	SELECT n.oid AS schemaoid,
 		c.oid AS oid,
@@ -172,14 +140,14 @@ func GetForeignTableRelations(connectionPool *dbconn.DBConn) []Relation {
 	ORDER BY c.oid`,
 		relationAndSchemaFilterClause(), ExtensionFilterClause("c"))
 
-	results := make([]Relation, 0)
+	results := make([]options.Relation, 0)
 	err := connectionPool.Select(&results, query)
 	gplog.FatalOnError(err)
 	return results
 }
 
 type Sequence struct {
-	Relation
+	options.Relation
 	OwningTableOid          string
 	OwningTableSchema       string
 	OwningTable             string
@@ -473,7 +441,7 @@ func GetAllViews(connectionPool *dbconn.DBConn) []View {
 // dumping part but it also makes the main worker thread (worker 0) the
 // most resilient for the later data dumping logic. Locks will still be
 // taken for --data-only calls.
-func LockTables(connectionPool *dbconn.DBConn, tables []Relation) {
+func LockTables(connectionPool *dbconn.DBConn, tables []options.Relation) {
 	gplog.Info("Acquiring ACCESS SHARE locks on tables")
 
 	progressBar := utils.NewProgressBar(len(tables), "Locks acquired: ", utils.PB_VERBOSE)
@@ -515,7 +483,7 @@ func LockTables(connectionPool *dbconn.DBConn, tables []Relation) {
 // GenerateTableBatches batches tables to reduce network congestion and
 // resource contention.  Returns an array of batches where a batch of tables is
 // a single string with comma separated tables
-func GenerateTableBatches(tables []Relation, batchSize int) []string {
+func GenerateTableBatches(tables []options.Relation, batchSize int) []string {
 	var tableNames []string
 	for _, table := range tables {
 		tableNames = append(tableNames, table.FQN())

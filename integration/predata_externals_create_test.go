@@ -7,6 +7,7 @@ import (
 	"github.com/greenplum-db/gp-common-go-libs/structmatcher"
 	"github.com/greenplum-db/gp-common-go-libs/testhelper"
 	"github.com/greenplum-db/gpbackup/backup"
+	"github.com/greenplum-db/gpbackup/options"
 	"github.com/greenplum-db/gpbackup/testutils"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -28,7 +29,7 @@ var _ = Describe("backup integration create statement tests", func() {
 				Command: "", RejectLimit: 0, RejectLimitType: "", ErrTableName: "", ErrTableSchema: "", Encoding: "UTF8",
 				Writable: false, URIs: []string{"file://tmp/ext_table_file"}}
 			testTable = backup.Table{
-				Relation:        backup.Relation{Schema: "public", Name: "testtable"},
+				Relation:        options.Relation{Schema: "public", Name: "testtable"},
 				TableDefinition: backup.TableDefinition{IsExternal: true},
 			}
 			_, _ = os.Create("/tmp/ext_table_file")
@@ -240,8 +241,8 @@ var _ = Describe("backup integration create statement tests", func() {
 	})
 	Describe("PrintExchangeExternalPartitionStatements", func() {
 		tables := []backup.Table{
-			{Relation: backup.Relation{Oid: 1, Schema: "public", Name: "part_tbl_ext_part_"}},
-			{Relation: backup.Relation{Oid: 2, Schema: "public", Name: "part_tbl"}},
+			{Relation: options.Relation{Oid: 1, Schema: "public", Name: "part_tbl_ext_part_"}},
+			{Relation: options.Relation{Oid: 2, Schema: "public", Name: "part_tbl"}},
 		}
 		emptyPartInfoMap := make(map[uint32]backup.PartitionInfo)
 		BeforeEach(func() {

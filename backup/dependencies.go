@@ -30,7 +30,7 @@ func AddProtocolDependenciesForGPDB4(depMap DependencyMap, tables []Table, proto
 		if extTableDef.Location.Valid && extTableDef.Location.String != "" {
 			protocolName := extTableDef.Location.String[0:strings.Index(extTableDef.Location.String, "://")]
 			if protocolEntry, ok := protocolMap[protocolName]; ok {
-				tableEntry := table.GetUniqueID()
+				tableEntry := GetUniqueID(table.Relation)
 				if _, ok := depMap[tableEntry]; !ok {
 					depMap[tableEntry] = make(map[UniqueID]bool)
 				}

@@ -148,6 +148,10 @@ type Relation struct {
 	Name      string
 }
 
+func (r Relation) FQN() string {
+	return utils.MakeFQN(r.Schema, r.Name)
+}
+
 func QuoteTableNames(conn *dbconn.DBConn, tableNames []string) ([]string, error) {
 	if len(tableNames) == 0 {
 		return []string{}, nil

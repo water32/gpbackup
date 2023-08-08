@@ -8,6 +8,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/greenplum-db/gp-common-go-libs/structmatcher"
 	"github.com/greenplum-db/gpbackup/backup"
+	"github.com/greenplum-db/gpbackup/options"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -16,9 +17,14 @@ import (
 var _ = Describe("backup internal tests", func() {
 	Describe("generateLockQueries", func() {
 		It("batches tables together and generates lock queries", func() {
-			tables := make([]backup.Relation, 0)
+			tables := make([]options.Relation, 0)
 			for i := 0; i < 200; i++ {
-				tables = append(tables, backup.Relation{0, 0, "public", fmt.Sprintf("foo%d", i)})
+				tables = append(tables, options.Relation{
+					SchemaOid: 0,
+					Oid:       0,
+					Schema:    "public",
+					Name:      fmt.Sprintf("foo%d", i),
+				})
 			}
 
 			batchSize := 100
@@ -26,9 +32,14 @@ var _ = Describe("backup internal tests", func() {
 			Expect(len(lockQueries)).To(Equal(2))
 		})
 		It("batches up remaining leftover tables together in a single lock query", func() {
-			tables := make([]backup.Relation, 0)
+			tables := make([]options.Relation, 0)
 			for i := 0; i < 101; i++ {
-				tables = append(tables, backup.Relation{0, 0, "public", fmt.Sprintf("foo%d", i)})
+				tables = append(tables, options.Relation{
+					SchemaOid: 0,
+					Oid:       0,
+					Schema:    "public",
+					Name:      fmt.Sprintf("foo%d", i),
+				})
 			}
 
 			batchSize := 50

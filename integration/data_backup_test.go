@@ -9,6 +9,7 @@ import (
 	"github.com/greenplum-db/gp-common-go-libs/testhelper"
 	"github.com/greenplum-db/gpbackup/backup"
 	"github.com/greenplum-db/gpbackup/filepath"
+	"github.com/greenplum-db/gpbackup/options"
 	"github.com/greenplum-db/gpbackup/testutils"
 	"github.com/greenplum-db/gpbackup/utils"
 
@@ -56,11 +57,11 @@ var _ = Describe("backup integration tests", func() {
 			testhelper.AssertQueryRuns(connectionPool, `CREATE TABLE dataTest.testtable1 (i int) DISTRIBUTED BY (i);`)
 			testhelper.AssertQueryRuns(connectionPool, `CREATE TABLE dataTest.testtable2 (i int) DISTRIBUTED BY (i);`)
 			testTables = []backup.Table{{
-				Relation:        backup.Relation{Oid: 0, Schema: "dataTest", Name: "testtable1"},
+				Relation:        options.Relation{Oid: 0, Schema: "dataTest", Name: "testtable1"},
 				TableDefinition: backup.TableDefinition{IsExternal: false},
 			},
 				{
-					Relation:        backup.Relation{Oid: 1, Schema: "dataTest", Name: "testtable2"},
+					Relation:        options.Relation{Oid: 1, Schema: "dataTest", Name: "testtable2"},
 					TableDefinition: backup.TableDefinition{IsExternal: false},
 				},
 			}
@@ -95,11 +96,11 @@ var _ = Describe("backup integration tests", func() {
 			testhelper.AssertQueryRuns(connectionPool, `CREATE TABLE dataTest.test2table1 (i int) DISTRIBUTED BY (i);`)
 			testhelper.AssertQueryRuns(connectionPool, `CREATE TABLE dataTest.test2table2 (i int) DISTRIBUTED BY (i);`)
 			testTables = []backup.Table{{
-				Relation:        backup.Relation{Oid: 0, Schema: "dataTest", Name: "test2table1"},
+				Relation:        options.Relation{Oid: 0, Schema: "dataTest", Name: "test2table1"},
 				TableDefinition: backup.TableDefinition{IsExternal: false},
 			},
 				{
-					Relation:        backup.Relation{Oid: 1, Schema: "dataTest", Name: "test2table2"},
+					Relation:        options.Relation{Oid: 1, Schema: "dataTest", Name: "test2table2"},
 					TableDefinition: backup.TableDefinition{IsExternal: false},
 				},
 			}
@@ -130,11 +131,11 @@ var _ = Describe("backup integration tests", func() {
 			testhelper.AssertQueryRuns(connectionPool, `CREATE TABLE dataTest.test3table1 (i int) DISTRIBUTED BY (i);`)
 			// do not create second table, so taking a lock on it will error
 			testTables = []backup.Table{{
-				Relation:        backup.Relation{Oid: 0, Schema: "dataTest", Name: "test3table1"},
+				Relation:        options.Relation{Oid: 0, Schema: "dataTest", Name: "test3table1"},
 				TableDefinition: backup.TableDefinition{IsExternal: false},
 			},
 				{
-					Relation:        backup.Relation{Oid: 1, Schema: "dataTest", Name: "test3table2"},
+					Relation:        options.Relation{Oid: 1, Schema: "dataTest", Name: "test3table2"},
 					TableDefinition: backup.TableDefinition{IsExternal: false},
 				},
 			}

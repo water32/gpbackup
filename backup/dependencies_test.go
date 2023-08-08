@@ -6,6 +6,7 @@ import (
 
 	"github.com/greenplum-db/gp-common-go-libs/testhelper"
 	"github.com/greenplum-db/gpbackup/backup"
+	"github.com/greenplum-db/gpbackup/options"
 	"github.com/greenplum-db/gpbackup/testutils"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -14,16 +15,16 @@ import (
 
 var _ = Describe("backup/dependencies tests", func() {
 	var (
-		relation1 backup.Relation
-		relation2 backup.Relation
-		relation3 backup.Relation
+		relation1 options.Relation
+		relation2 options.Relation
+		relation3 options.Relation
 		depMap    map[backup.UniqueID]map[backup.UniqueID]bool
 	)
 
 	BeforeEach(func() {
-		relation1 = backup.Relation{Schema: "public", Name: "relation1", Oid: 1}
-		relation2 = backup.Relation{Schema: "public", Name: "relation2", Oid: 2}
-		relation3 = backup.Relation{Schema: "public", Name: "relation3", Oid: 3}
+		relation1 = options.Relation{Schema: "public", Name: "relation1", Oid: 1}
+		relation2 = options.Relation{Schema: "public", Name: "relation2", Oid: 2}
+		relation3 = options.Relation{Schema: "public", Name: "relation3", Oid: 3}
 		depMap = make(map[backup.UniqueID]map[backup.UniqueID]bool)
 		tocfile, backupfile = testutils.InitializeTestTOC(buffer, "predata")
 	})
@@ -129,7 +130,7 @@ var _ = Describe("backup/dependencies tests", func() {
 				backup.CompositeType{Oid: 3, Schema: "public", Name: "composite", Attributes: []backup.Attribute{{Name: "foo", Type: "integer"}}},
 				backup.Domain{Oid: 4, Schema: "public", Name: "domain", BaseType: "numeric"},
 				backup.Table{
-					Relation:        backup.Relation{Oid: 5, Schema: "public", Name: "relation"},
+					Relation:        options.Relation{Oid: 5, Schema: "public", Name: "relation"},
 					TableDefinition: backup.TableDefinition{DistPolicy: "DISTRIBUTED RANDOMLY", ColumnDefs: []backup.ColumnDefinition{}},
 				},
 				backup.ExternalProtocol{Oid: 6, Name: "ext_protocol", Trusted: true, ReadFunction: 2, WriteFunction: 1, Validator: 0},

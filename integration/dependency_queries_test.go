@@ -60,8 +60,8 @@ var _ = Describe("backup integration tests", func() {
 			deps := backup.GetDependencies(connectionPool, backupSet, tables)
 			if connectionPool.Version.Is("4") {
 				optRelations := backup.GetIncludedUserTableRelations(connectionPool, []options.Relation{})
-				tableRelations := backup.ConvertRelationsOptionsToBackup(optRelations)
-				tables := backup.ConstructDefinitionsForTables(connectionPool, tableRelations)
+				// tableRelations := backup.ConvertRelationsOptionsToBackup(optRelations)
+				tables := backup.ConstructDefinitionsForTables(connectionPool, optRelations)
 				protocols := backup.GetExternalProtocols(connectionPool)
 				backup.AddProtocolDependenciesForGPDB4(deps, tables, protocols)
 			}

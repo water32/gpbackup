@@ -400,7 +400,7 @@ func PrintCreateSequenceStatements(metadataFile *utils.FileWithByteCount,
 
 		section, entry := sequence.GetMetadataEntry()
 		toc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount)
-		PrintObjectMetadata(metadataFile, toc, sequenceMetadata[sequence.Relation.GetUniqueID()], sequence, "")
+		PrintObjectMetadata(metadataFile, toc, sequenceMetadata[GetUniqueID(sequence.Relation)], sequence, "")
 	}
 }
 

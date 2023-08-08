@@ -9,6 +9,7 @@ import (
 	"github.com/greenplum-db/gpbackup/backup"
 	"github.com/greenplum-db/gpbackup/filepath"
 	"github.com/greenplum-db/gpbackup/history"
+	"github.com/greenplum-db/gpbackup/options"
 	"github.com/greenplum-db/gpbackup/report"
 	"github.com/greenplum-db/gpbackup/testutils"
 	"github.com/greenplum-db/gpbackup/toc"
@@ -50,10 +51,10 @@ var _ = Describe("backup/incremental tests", func() {
 			},
 		}
 
-		tblHeap := backup.Table{Relation: backup.Relation{Schema: "public", Name: "heap"}}
-		tblAOChangedModcount := backup.Table{Relation: backup.Relation{Schema: "public", Name: "ao_changed_modcount"}}
-		tblAOChangedTS := backup.Table{Relation: backup.Relation{Schema: "public", Name: "ao_changed_timestamp"}}
-		tblAOUnchanged := backup.Table{Relation: backup.Relation{Schema: "public", Name: "ao_unchanged"}}
+		tblHeap := backup.Table{Relation: options.Relation{Schema: "public", Name: "heap"}}
+		tblAOChangedModcount := backup.Table{Relation: options.Relation{Schema: "public", Name: "ao_changed_modcount"}}
+		tblAOChangedTS := backup.Table{Relation: options.Relation{Schema: "public", Name: "ao_changed_timestamp"}}
+		tblAOUnchanged := backup.Table{Relation: options.Relation{Schema: "public", Name: "ao_unchanged"}}
 		tables := []backup.Table{
 			tblHeap,
 			tblAOChangedModcount,
@@ -171,8 +172,8 @@ var _ = Describe("backup/incremental tests", func() {
 		Context("Full backup", func() {
 			restorePlan := make([]history.RestorePlanEntry, 0)
 			backupSetTables := []backup.Table{
-				{Relation: backup.Relation{Schema: "public", Name: "ao1"}},
-				{Relation: backup.Relation{Schema: "public", Name: "heap1"}},
+				{Relation: options.Relation{Schema: "public", Name: "ao1"}},
+				{Relation: options.Relation{Schema: "public", Name: "heap1"}},
 			}
 			allTables := backupSetTables
 
@@ -199,8 +200,8 @@ var _ = Describe("backup/incremental tests", func() {
 				{Timestamp: "ts1", TableFQNs: []string{"public.heap1"}},
 			}
 			changedTables := []backup.Table{
-				{Relation: backup.Relation{Schema: "public", Name: "ao1"}},
-				{Relation: backup.Relation{Schema: "public", Name: "heap1"}},
+				{Relation: options.Relation{Schema: "public", Name: "ao1"}},
+				{Relation: options.Relation{Schema: "public", Name: "heap1"}},
 			}
 
 			Context("Incremental backup with no table drops in between", func() {

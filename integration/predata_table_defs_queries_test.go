@@ -797,12 +797,12 @@ SET SUBPARTITION TEMPLATE
 		})
 	})
 	Describe("GetTableInheritance", func() {
-		child := backup.Relation{Schema: "public", Name: "child"}
-		childOne := backup.Relation{Schema: "public", Name: "child_one"}
-		childTwo := backup.Relation{Schema: "public", Name: "child_two"}
-		parent := backup.Relation{Schema: "public", Name: "parent"}
-		parentOne := backup.Relation{Schema: "public", Name: "parent_one"}
-		parentTwo := backup.Relation{Schema: "public", Name: "parent_two"}
+		child := options.Relation{Schema: "public", Name: "child"}
+		childOne := options.Relation{Schema: "public", Name: "child_one"}
+		childTwo := options.Relation{Schema: "public", Name: "child_two"}
+		parent := options.Relation{Schema: "public", Name: "parent"}
+		parentOne := options.Relation{Schema: "public", Name: "parent_one"}
+		parentTwo := options.Relation{Schema: "public", Name: "parent_two"}
 
 		It("constructs dependencies correctly if there is one table dependent on one table", func() {
 			testhelper.AssertQueryRuns(connectionPool, "CREATE TABLE public.parent(i int)")
@@ -811,7 +811,7 @@ SET SUBPARTITION TEMPLATE
 			defer testhelper.AssertQueryRuns(connectionPool, "DROP TABLE public.child")
 
 			child.Oid = testutils.OidFromObjectName(connectionPool, "public", "child", backup.TYPE_RELATION)
-			tables := []backup.Relation{child, parent}
+			tables := []options.Relation{child, parent}
 
 			inheritanceMap := backup.GetTableInheritance(connectionPool, tables)
 
@@ -828,7 +828,7 @@ SET SUBPARTITION TEMPLATE
 
 			childOne.Oid = testutils.OidFromObjectName(connectionPool, "public", "child_one", backup.TYPE_RELATION)
 			childTwo.Oid = testutils.OidFromObjectName(connectionPool, "public", "child_two", backup.TYPE_RELATION)
-			tables := []backup.Relation{parent, childOne, childTwo}
+			tables := []options.Relation{parent, childOne, childTwo}
 
 			inheritanceMap := backup.GetTableInheritance(connectionPool, tables)
 
@@ -845,7 +845,7 @@ SET SUBPARTITION TEMPLATE
 			defer testhelper.AssertQueryRuns(connectionPool, "DROP TABLE public.child")
 
 			child.Oid = testutils.OidFromObjectName(connectionPool, "public", "child", backup.TYPE_RELATION)
-			tables := []backup.Relation{parentOne, parentTwo, child}
+			tables := []options.Relation{parentOne, parentTwo, child}
 
 			inheritanceMap := backup.GetTableInheritance(connectionPool, tables)
 
@@ -855,7 +855,7 @@ SET SUBPARTITION TEMPLATE
 		It("constructs dependencies correctly if there are no table dependencies", func() {
 			testhelper.AssertQueryRuns(connectionPool, "CREATE TABLE public.parent(i int)")
 			defer testhelper.AssertQueryRuns(connectionPool, "DROP TABLE public.parent")
-			tables := make([]backup.Relation, 0)
+			tables := make([]options.Relation, 0)
 
 			inheritanceMap := backup.GetTableInheritance(connectionPool, tables)
 
@@ -866,7 +866,7 @@ SET SUBPARTITION TEMPLATE
 			defer testhelper.AssertQueryRuns(connectionPool, "DROP TABLE public.parent")
 
 			_ = backupCmdFlags.Set(options.INCLUDE_RELATION, "public.parent")
-			tables := make([]backup.Relation, 0)
+			tables := make([]options.Relation, 0)
 
 			inheritanceMap := backup.GetTableInheritance(connectionPool, tables)
 
@@ -883,7 +883,7 @@ SET SUBPARTITION TEMPLATE
 			_ = backupCmdFlags.Set(options.INCLUDE_RELATION, "public.parent_one")
 			_ = backupCmdFlags.Set(options.INCLUDE_RELATION, "public.child")
 			parentOne.Oid = testutils.OidFromObjectName(connectionPool, "public", "parent_one", backup.TYPE_RELATION)
-			tables := []backup.Relation{childOne}
+			tables := []options.Relation{childOne}
 
 			inheritanceMap := backup.GetTableInheritance(connectionPool, tables)
 
@@ -899,7 +899,7 @@ SET SUBPARTITION TEMPLATE
 
 			_ = backupCmdFlags.Set(options.INCLUDE_RELATION, "public.child_one")
 			childOne.Oid = testutils.OidFromObjectName(connectionPool, "public", "child_one", backup.TYPE_RELATION)
-			tables := []backup.Relation{childOne}
+			tables := []options.Relation{childOne}
 
 			inheritanceMap := backup.GetTableInheritance(connectionPool, tables)
 
@@ -920,10 +920,10 @@ SET SUBPARTITION TEMPLATE
 			defer testhelper.AssertQueryRuns(connectionPool, "DROP TABLE public.partition_table_ext_part_")
 			testhelper.AssertQueryRuns(connectionPool, `ALTER TABLE public.partition_table EXCHANGE PARTITION girls WITH TABLE public.partition_table_ext_part_ WITHOUT VALIDATION;`)
 
-			partition := backup.Relation{Schema: "public", Name: "partition_table_ext_part_"}
+			partition := options.Relation{Schema: "public", Name: "partition_table_ext_part_"}
 
 			partition.Oid = testutils.OidFromObjectName(connectionPool, "public", "partition_table_ext_part_", backup.TYPE_RELATION)
-			tables := []backup.Relation{partition}
+			tables := []options.Relation{partition}
 
 			inheritanceMap := backup.GetTableInheritance(connectionPool, tables)
 

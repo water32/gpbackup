@@ -522,7 +522,7 @@ func runAnalyze(filteredDataEntries map[string][]toc.CoordinatorDataEntry) {
 			}
 		}
 
-		for rootAnalyzeStatement, _ := range partitionRootSet {
+		for rootAnalyzeStatement := range partitionRootSet {
 			analyzeStatements = append(analyzeStatements, rootAnalyzeStatement)
 		}
 	}
