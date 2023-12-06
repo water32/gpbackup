@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/greenplum-db/gpbackup/options"
 	"github.com/greenplum-db/gpbackup/toc"
 	"github.com/greenplum-db/gpbackup/utils"
 )
@@ -57,11 +58,16 @@ type ACL struct {
 type MetadataMap map[UniqueID]ObjectMetadata
 
 func PrintStatements(metadataFile *utils.FileWithByteCount, objToc *toc.TOC,
-	obj toc.TOCObject, statements []string, tier []uint32) {
+	obj toc.TOCObject, statements []toc.StatementWithType, tier []uint32) {
 	for _, statement := range statements {
 		start := metadataFile.ByteCount
-		metadataFile.MustPrintf("\n\n%s\n", statement)
+		metadataFile.MustPrintf("\n\n%s\n", statement.Statement)
 		section, entry := obj.GetMetadataEntry()
+		// GetMetadataEntry can't take another object in order to pass reference object information,
+		// so we just use the generic implementation and set the referenced object and type manually
+		if statement.ObjectType == toc.OBJ_OWNER || statement.ObjectType == toc.OBJ_PRIVILEGES {
+			entry.ReferenceObject = statement.ReferenceObject
+		}
 
 		/*
 		 * Postdata metadata needs to be specifically marked as such to
@@ -86,9 +92,9 @@ func PrintObjectMetadata(metadataFile *utils.FileWithByteCount, objToc *toc.TOC,
 	if entry.ObjectType == toc.OBJ_DATABASE_METADATA {
 		entry.ObjectType = toc.OBJ_DATABASE
 	}
-	statements := make([]string, 0)
+	statements := make([]toc.StatementWithType, 0)
 	if comment := metadata.GetCommentStatement(obj.FQN(), entry.ObjectType, owningTable); comment != "" {
-		statements = append(statements, strings.TrimSpace(comment))
+		statements = append(statements, toc.StatementWithType{Statement: strings.TrimSpace(comment), ObjectType: entry.ObjectType, ReferenceObject: obj.FQN()})
 	}
 
 	objectType := entry.ObjectType
@@ -103,17 +109,19 @@ func PrintObjectMetadata(metadataFile *utils.FileWithByteCount, objToc *toc.TOC,
 		}
 	}
 
-	if owner := metadata.GetOwnerStatement(obj.FQN(), objectType); owner != "" {
-		if !(connectionPool.Version.Before("5") && entry.ObjectType == toc.OBJ_LANGUAGE) {
-			// Languages have implicit owners in 4.3, but do not support ALTER OWNER
-			statements = append(statements, strings.TrimSpace(owner))
+	if !MustGetFlagBool(options.NO_PRIVILEGES) {
+		if owner := metadata.GetOwnerStatement(obj.FQN(), objectType); owner != "" {
+			if !(connectionPool.Version.Before("5") && entry.ObjectType == toc.OBJ_LANGUAGE) {
+				// Languages have implicit owners in 4.3, but do not support ALTER OWNER
+				statements = append(statements, toc.StatementWithType{Statement: strings.TrimSpace(owner), ObjectType: toc.OBJ_OWNER, ReferenceObject: obj.FQN()})
+			}
+		}
+		if privileges := metadata.GetPrivilegesStatements(obj.FQN(), entry.ObjectType); privileges != "" {
+			statements = append(statements, toc.StatementWithType{Statement: strings.TrimSpace(privileges), ObjectType: toc.OBJ_PRIVILEGES, ReferenceObject: obj.FQN()})
 		}
 	}
-	if privileges := metadata.GetPrivilegesStatements(obj.FQN(), entry.ObjectType); privileges != "" {
-		statements = append(statements, strings.TrimSpace(privileges))
-	}
 	if securityLabel := metadata.GetSecurityLabelStatement(obj.FQN(), entry.ObjectType); securityLabel != "" {
-		statements = append(statements, strings.TrimSpace(securityLabel))
+		statements = append(statements, toc.StatementWithType{Statement: strings.TrimSpace(securityLabel), ObjectType: entry.ObjectType})
 	}
 	PrintStatements(metadataFile, objToc, obj, statements, tier)
 }
@@ -137,10 +145,10 @@ func printExtensionFunctionACLs(metadataFile *utils.FileWithByteCount, objToc *t
 	sort.SliceStable(objects, func(i, j int) bool {
 		return objects[i].FQN() < objects[j].FQN()
 	})
-	statements := make([]string, 0)
+	statements := make([]toc.StatementWithType, 0)
 	for _, obj := range objects {
 		if privileges := obj.GetPrivilegesStatements(obj.FQN(), toc.OBJ_FUNCTION); privileges != "" {
-			statements = append(statements, strings.TrimSpace(privileges))
+			statements = append(statements, toc.StatementWithType{Statement: strings.TrimSpace(privileges), ObjectType: toc.OBJ_PRIVILEGES})
 			PrintStatements(metadataFile, objToc, obj, statements, []uint32{0, 0})
 		}
 	}
@@ -176,12 +184,16 @@ func ConstructMetadataMap(results []MetadataQueryStruct) MetadataMap {
 			metadata.SecurityLabel = result.SecurityLabel
 		}
 
-		privileges := ParseACL(privilegesStr)
-		if privileges != nil {
-			metadata.Privileges = append(metadata.Privileges, *privileges)
+		if !MustGetFlagBool(options.NO_PRIVILEGES) {
+			privileges := ParseACL(privilegesStr)
+			if privileges != nil {
+				metadata.Privileges = append(metadata.Privileges, *privileges)
+			}
 		}
 	}
-	metadata.Privileges = sortACLs(metadata.Privileges)
+	if !MustGetFlagBool(options.NO_PRIVILEGES) {
+		metadata.Privileges = sortACLs(metadata.Privileges)
+	}
 	metadataMap[currentUniqueID] = metadata
 	return metadataMap
 }

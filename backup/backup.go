@@ -230,7 +230,9 @@ func backupGlobals(metadataFile *utils.FileWithByteCount) {
 	backupResourceQueues(metadataFile)
 	backupResourceGroups(metadataFile)
 	backupRoles(metadataFile)
-	backupRoleGrants(metadataFile)
+	if !MustGetFlagBool(options.NO_PRIVILEGES) {
+		backupRoleGrants(metadataFile)
+	}
 	backupTablespaces(metadataFile)
 	backupCreateDatabase(metadataFile)
 	backupDatabaseGUCs(metadataFile)
@@ -333,7 +335,9 @@ func backupPostdata(metadataFile *utils.FileWithByteCount) {
 	backupRules(metadataFile)
 	backupTriggers(metadataFile)
 	if connectionPool.Version.AtLeast("6") {
-		backupDefaultPrivileges(metadataFile)
+		if !MustGetFlagBool(options.NO_PRIVILEGES) {
+			backupDefaultPrivileges(metadataFile)
+		}
 		if len(MustGetFlagStringArray(options.INCLUDE_SCHEMA)) == 0 {
 			backupEventTriggers(metadataFile)
 		}

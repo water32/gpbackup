@@ -38,6 +38,7 @@ const (
 	NO_COMPRESSION        = "no-compression"
 	NO_HISTORY            = "no-history"
 	NO_INHERITS           = "no-inherits"
+	NO_PRIVILEGES         = "no-privileges"
 	ON_ERROR_CONTINUE     = "on-error-continue"
 	PLUGIN_CONFIG         = "plugin-config"
 	QUIET                 = "quiet"
@@ -68,6 +69,7 @@ func SetBackupFlagDefaults(flagSet *pflag.FlagSet) {
 	flagSet.Bool(NO_COMPRESSION, false, "Skip compression of data files")
 	flagSet.Bool(NO_HISTORY, false, "Do not write a backup entry to the gpbackup_history database")
 	flagSet.Bool(NO_INHERITS, false, "For a filtered backup, don't back up all tables that inherit included tables")
+	flagSet.Bool(NO_PRIVILEGES, false, "Do not back up owner or privilege information for objects in the backup")
 	flagSet.Bool(QUIET, false, "Suppress non-warning, non-error log messages")
 	flagSet.Bool(SINGLE_BACKUP_DIR, false, "Back up all data to a single directory instead of split by segment")
 	flagSet.Bool(SINGLE_DATA_FILE, false, "Back up all data to a single file instead of one per table")
