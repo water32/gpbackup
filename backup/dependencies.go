@@ -395,6 +395,7 @@ func breakCircularDependencies(depMap DependencyMap) {
 }
 
 func PrintDependentObjectStatements(metadataFile *utils.FileWithByteCount, objToc *toc.TOC, objects []Sortable, metadataMap MetadataMap, domainConstraints []Constraint, funcInfoMap map[uint32]FunctionInfo) {
+	var viewsDependingOnConstraint []View
 	domainConMap := make(map[string][]Constraint)
 	for _, constraint := range domainConstraints {
 		domainConMap[constraint.OwningObject] = append(domainConMap[constraint.OwningObject], constraint)
@@ -417,7 +418,12 @@ func PrintDependentObjectStatements(metadataFile *utils.FileWithByteCount, objTo
 		case ExternalProtocol:
 			PrintCreateExternalProtocolStatement(metadataFile, objToc, obj, funcInfoMap, objMetadata)
 		case View:
-			PrintCreateViewStatement(metadataFile, objToc, obj, objMetadata)
+			if obj.NeedsDummy {
+				PrintCreateDummyViewStatement(metadataFile, objToc, obj, objMetadata)
+				viewsDependingOnConstraint = append(viewsDependingOnConstraint, obj)
+			} else {
+				PrintCreateViewStatement(metadataFile, objToc, obj, objMetadata)
+			}
 		case TextSearchParser:
 			PrintCreateTextSearchParserStatement(metadataFile, objToc, obj, objMetadata)
 		case TextSearchConfiguration:
@@ -448,6 +454,11 @@ func PrintDependentObjectStatements(metadataFile *utils.FileWithByteCount, objTo
 		// Remove ACLs from metadataMap for the current object since they have been processed
 		delete(metadataMap, object.GetUniqueID())
 	}
+
+	for _, view := range viewsDependingOnConstraint {
+		PrintCreatePostdataViewStatement(metadataFile, objToc, view)
+	}
+
 	//  Process ACLs for left over objects in the metadata map
 	printExtensionFunctionACLs(metadataFile, objToc, metadataMap, funcInfoMap)
 }

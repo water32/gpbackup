@@ -635,6 +635,7 @@ func backupDependentObjects(metadataFile *utils.FileWithByteCount, tables []Tabl
 	if connectionPool.Version.Is("4") && !tableOnly {
 		AddProtocolDependenciesForGPDB4(relevantDeps, tables, protocols)
 	}
+	markViewsDependingOnConstraints(sortables, relevantDeps)
 	sortedSlice, globalTierMap = TopologicalSort(sortables, relevantDeps)
 
 	PrintDependentObjectStatements(metadataFile, globalTOC, sortedSlice, filteredMetadata, domainConstraints, funcInfoMap)
@@ -644,6 +645,27 @@ func backupDependentObjects(metadataFile *utils.FileWithByteCount, tables []Tabl
 	if connectionPool.Version.Before("7") && len(extPartInfo) > 0 {
 		gplog.Verbose("Writing EXCHANGE PARTITION statements to metadata file")
 		PrintExchangeExternalPartitionStatements(metadataFile, globalTOC, extPartInfo, partInfoMap, tables)
+	}
+}
+
+func markViewsDependingOnConstraints(sortableObjs []Sortable, depMap DependencyMap) {
+	for i, _ := range sortableObjs {
+		view, ok := sortableObjs[i].(View)
+		if !ok {
+			continue
+		}
+
+		relationsViewDependsOn, ok := depMap[view.GetUniqueID()]
+		if !ok {
+			continue
+		}
+
+		for relation := range relationsViewDependsOn {
+			if relation.ClassID == PG_CONSTRAINT_OID {
+				view.NeedsDummy = true
+				sortableObjs[i] = view
+			}
+		}
 	}
 }
 
