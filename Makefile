@@ -60,7 +60,7 @@ lint : $(GOLANG_LINTER)
 		golangci-lint run --tests=false
 
 unit : $(GINKGO)
-	ginkgo $(GINKGO_FLAGS) $(SUBDIRS_HAS_UNIT) 2>&1
+	CGO_CFLAGS="-Wno-return-local-addr" ginkgo $(GINKGO_FLAGS) $(SUBDIRS_HAS_UNIT) 2>&1
 
 unit_all_gpdb_versions : $(GINKGO)
 		TEST_GPDB_VERSION=4.3.999 ginkgo $(GINKGO_FLAGS) $(SUBDIRS_HAS_UNIT) 2>&1
@@ -69,25 +69,25 @@ unit_all_gpdb_versions : $(GINKGO)
 		TEST_GPDB_VERSION=7.999.0 ginkgo $(GINKGO_FLAGS) $(SUBDIRS_HAS_UNIT) 2>&1 # GPDB main
 
 integration : $(GINKGO)
-	ginkgo $(GINKGO_FLAGS) integration 2>&1
+	CGO_CFLAGS="-Wno-return-local-addr" ginkgo $(GINKGO_FLAGS) integration 2>&1
 
 test : build unit integration
 
 end_to_end : $(GINKGO)
-	ginkgo $(GINKGO_FLAGS) --timeout=3h --poll-progress-after=0s end_to_end -- --custom_backup_dir $(CUSTOM_BACKUP_DIR) 2>&1
+	CGO_CFLAGS="-Wno-return-local-addr" ginkgo $(GINKGO_FLAGS) --timeout=3h --poll-progress-after=0s end_to_end -- --custom_backup_dir $(CUSTOM_BACKUP_DIR) 2>&1
 
 coverage :
 		@./show_coverage.sh
 
 build : $(GOSQLITE)
-		CGO_ENABLED=1 $(GO_BUILD) -tags '$(BACKUP)' -o $(BIN_DIR)/$(BACKUP) --ldflags '-X $(BACKUP_VERSION_STR)'
-		CGO_ENABLED=1 $(GO_BUILD) -tags '$(RESTORE)' -o $(BIN_DIR)/$(RESTORE) --ldflags '-X $(RESTORE_VERSION_STR)'
-		CGO_ENABLED=1 $(GO_BUILD) -tags '$(HELPER)' -o $(BIN_DIR)/$(HELPER) --ldflags '-X $(HELPER_VERSION_STR)'
+		CGO_ENABLED=1 CGO_CFLAGS="-Wno-return-local-addr" $(GO_BUILD) -tags '$(BACKUP)' -o $(BIN_DIR)/$(BACKUP) --ldflags '-X $(BACKUP_VERSION_STR)'
+		CGO_ENABLED=1 CGO_CFLAGS="-Wno-return-local-addr" $(GO_BUILD) -tags '$(RESTORE)' -o $(BIN_DIR)/$(RESTORE) --ldflags '-X $(RESTORE_VERSION_STR)'
+		CGO_ENABLED=1 CGO_CFLAGS="-Wno-return-local-addr" $(GO_BUILD) -tags '$(HELPER)' -o $(BIN_DIR)/$(HELPER) --ldflags '-X $(HELPER_VERSION_STR)'
 
 debug :
-		CGO_ENABLED=1 $(GO_BUILD) -tags '$(BACKUP)' -o $(BIN_DIR)/$(BACKUP) -ldflags "-X $(BACKUP_VERSION_STR)" $(DEBUG)
-		CGO_ENABLED=1 $(GO_BUILD) -tags '$(RESTORE)' -o $(BIN_DIR)/$(RESTORE) -ldflags "-X $(RESTORE_VERSION_STR)" $(DEBUG)
-		CGO_ENABLED=1 $(GO_BUILD) -tags '$(HELPER)' -o $(BIN_DIR)/$(HELPER) -ldflags "-X $(HELPER_VERSION_STR)" $(DEBUG)
+		CGO_ENABLED=1 CGO_CFLAGS="-Wno-return-local-addr" $(GO_BUILD) -tags '$(BACKUP)' -o $(BIN_DIR)/$(BACKUP) -ldflags "-X $(BACKUP_VERSION_STR)" $(DEBUG)
+		CGO_ENABLED=1 CGO_CFLAGS="-Wno-return-local-addr" $(GO_BUILD) -tags '$(RESTORE)' -o $(BIN_DIR)/$(RESTORE) -ldflags "-X $(RESTORE_VERSION_STR)" $(DEBUG)
+		CGO_ENABLED=1 CGO_CFLAGS="-Wno-return-local-addr" $(GO_BUILD) -tags '$(HELPER)' -o $(BIN_DIR)/$(HELPER) -ldflags "-X $(HELPER_VERSION_STR)" $(DEBUG)
 
 build_linux :
 		env GOOS=linux GOARCH=amd64 $(GO_BUILD) -tags '$(BACKUP)' -o $(BACKUP) -ldflags "-X $(BACKUP_VERSION_STR)"
