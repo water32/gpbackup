@@ -454,13 +454,15 @@ func PrintCreateViewStatement(metadataFile *utils.FileWithByteCount, objToc *toc
 
 // The CREATE statement here should be kept in sync with the one in
 // PrintCreateViewStatement
-func PrintCreatePostdataViewStatement(metadataFile *utils.FileWithByteCount, objToc *toc.TOC, view View) {
-	start := metadataFile.ByteCount
-	metadataFile.MustPrintf("\n\nCREATE OR REPLACE VIEW %s%s AS %s\n", view.FQN(), view.Options, view.Definition.String)
-	section, entry := view.GetMetadataEntry()
-	section = "postdata"
-	tier := globalTierMap[view.GetUniqueID()]
-	objToc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
+func PrintCreatePostdataViewStatements(metadataFile *utils.FileWithByteCount, objToc *toc.TOC, views []View) {
+	for _, view := range views {
+		start := metadataFile.ByteCount
+		metadataFile.MustPrintf("\n\nCREATE OR REPLACE VIEW %s%s AS %s\n", view.FQN(), view.Options, view.Definition.String)
+		section, entry := view.GetMetadataEntry()
+		section = "postdata"
+		tier := globalTierMap[view.GetUniqueID()]
+		objToc.AddMetadataEntry(section, entry, start, metadataFile.ByteCount, tier)
+	}
 }
 
 // A dummy view is used to resolve the circular dependency of the following

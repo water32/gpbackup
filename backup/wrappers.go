@@ -273,7 +273,7 @@ func retrieveAndBackupTypes(metadataFile *utils.FileWithByteCount, sortables *[]
 	addToMetadataMap(typeMetadata, metadataMap)
 }
 
-func retrieveConstraints(sortables *[]Sortable, metadataMap MetadataMap, tables ...Relation) []Constraint {
+func retrieveConstraints(sortables *[]Sortable, metadataMap MetadataMap, tables ...Relation) ([]Constraint, []Constraint, MetadataMap) {
 	gplog.Verbose("Retrieving constraints")
 	constraints := GetConstraints(connectionPool, tables...)
 	if len(constraints) > 0 && connectionPool.Version.AtLeast("7") {
@@ -291,11 +291,8 @@ func retrieveConstraints(sortables *[]Sortable, metadataMap MetadataMap, tables 
 		}
 	}
 
-	objectCounts["Constraints"] = len(nonDomainConstraints)
 	conMetadata := GetCommentsForObjectType(connectionPool, TYPE_CONSTRAINT)
-	*sortables = append(*sortables, convertToSortableSlice(nonDomainConstraints)...)
-	addToMetadataMap(conMetadata, metadataMap)
-	return domainConstraints
+	return domainConstraints, nonDomainConstraints, conMetadata
 }
 
 func retrieveAndBackupSequences(metadataFile *utils.FileWithByteCount,
@@ -626,7 +623,7 @@ func addToMetadataMap(newMetadata MetadataMap, metadataMap MetadataMap) {
 // This function is fairly unwieldy, but there's not really a good way to break it down
 func backupDependentObjects(metadataFile *utils.FileWithByteCount, tables []Table,
 	protocols []ExternalProtocol, filteredMetadata MetadataMap, domainConstraints []Constraint,
-	sortables []Sortable, sequences []Sequence, funcInfoMap map[uint32]FunctionInfo, tableOnly bool) {
+	sortables []Sortable, sequences []Sequence, funcInfoMap map[uint32]FunctionInfo, tableOnly bool) []View {
 	var sortedSlice []Sortable
 	gplog.Verbose("Writing CREATE statements for dependent objects to metadata file")
 
@@ -635,7 +632,7 @@ func backupDependentObjects(metadataFile *utils.FileWithByteCount, tables []Tabl
 	if connectionPool.Version.Is("4") && !tableOnly {
 		AddProtocolDependenciesForGPDB4(relevantDeps, tables, protocols)
 	}
-	markViewsDependingOnConstraints(sortables, relevantDeps)
+	viewsDependingOnConstraints := markViewsDependingOnConstraints(sortables, relevantDeps)
 	sortedSlice, globalTierMap = TopologicalSort(sortables, relevantDeps)
 
 	PrintDependentObjectStatements(metadataFile, globalTOC, sortedSlice, filteredMetadata, domainConstraints, funcInfoMap)
@@ -646,9 +643,11 @@ func backupDependentObjects(metadataFile *utils.FileWithByteCount, tables []Tabl
 		gplog.Verbose("Writing EXCHANGE PARTITION statements to metadata file")
 		PrintExchangeExternalPartitionStatements(metadataFile, globalTOC, extPartInfo, partInfoMap, tables)
 	}
+	return viewsDependingOnConstraints
 }
 
-func markViewsDependingOnConstraints(sortableObjs []Sortable, depMap DependencyMap) {
+func markViewsDependingOnConstraints(sortableObjs []Sortable, depMap DependencyMap) []View {
+	var viewsDependingOnConstraints []View
 	for i, _ := range sortableObjs {
 		view, ok := sortableObjs[i].(View)
 		if !ok {
@@ -664,9 +663,11 @@ func markViewsDependingOnConstraints(sortableObjs []Sortable, depMap DependencyM
 			if relation.ClassID == PG_CONSTRAINT_OID {
 				view.NeedsDummy = true
 				sortableObjs[i] = view
+				viewsDependingOnConstraints = append(viewsDependingOnConstraints, view)
 			}
 		}
 	}
+	return viewsDependingOnConstraints
 }
 
 func backupConversions(metadataFile *utils.FileWithByteCount) {
@@ -709,6 +710,17 @@ func backupExtensions(metadataFile *utils.FileWithByteCount) {
 	objectCounts["Extensions"] = len(extensions)
 	extensionMetadata := GetCommentsForObjectType(connectionPool, TYPE_EXTENSION)
 	PrintCreateExtensionStatements(metadataFile, globalTOC, extensions, extensionMetadata)
+}
+
+func backupConstraints(metadataFile *utils.FileWithByteCount, constraints []Constraint, conMetadata MetadataMap) {
+	gplog.Verbose("Writing ADD CONSTRAINT statements to metadata file")
+	objectCounts["Constraints"] = len(constraints)
+	PrintConstraintStatements(metadataFile, globalTOC, constraints, conMetadata)
+}
+
+func backupViewsDependingOnConstraints(metadataFile *utils.FileWithByteCount, views []View) {
+	gplog.Verbose("Writing CREATE VIEW statements for views that depend on constraints to metadata file")
+	PrintCreatePostdataViewStatements(metadataFile, globalTOC, views)
 }
 
 /*

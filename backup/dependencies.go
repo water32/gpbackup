@@ -395,7 +395,6 @@ func breakCircularDependencies(depMap DependencyMap) {
 }
 
 func PrintDependentObjectStatements(metadataFile *utils.FileWithByteCount, objToc *toc.TOC, objects []Sortable, metadataMap MetadataMap, domainConstraints []Constraint, funcInfoMap map[uint32]FunctionInfo) {
-	var viewsDependingOnConstraint []View
 	domainConMap := make(map[string][]Constraint)
 	for _, constraint := range domainConstraints {
 		domainConMap[constraint.OwningObject] = append(domainConMap[constraint.OwningObject], constraint)
@@ -420,7 +419,6 @@ func PrintDependentObjectStatements(metadataFile *utils.FileWithByteCount, objTo
 		case View:
 			if obj.NeedsDummy {
 				PrintCreateDummyViewStatement(metadataFile, objToc, obj, objMetadata)
-				viewsDependingOnConstraint = append(viewsDependingOnConstraint, obj)
 			} else {
 				PrintCreateViewStatement(metadataFile, objToc, obj, objMetadata)
 			}
@@ -446,17 +444,11 @@ func PrintDependentObjectStatements(metadataFile *utils.FileWithByteCount, objTo
 			PrintCreateServerStatement(metadataFile, objToc, obj, objMetadata)
 		case UserMapping:
 			PrintCreateUserMappingStatement(metadataFile, objToc, obj)
-		case Constraint:
-			PrintConstraintStatement(metadataFile, objToc, obj, objMetadata)
 		case Transform:
 			PrintCreateTransformStatement(metadataFile, objToc, obj, funcInfoMap, objMetadata)
 		}
 		// Remove ACLs from metadataMap for the current object since they have been processed
 		delete(metadataMap, object.GetUniqueID())
-	}
-
-	for _, view := range viewsDependingOnConstraint {
-		PrintCreatePostdataViewStatement(metadataFile, objToc, view)
 	}
 
 	//  Process ACLs for left over objects in the metadata map
