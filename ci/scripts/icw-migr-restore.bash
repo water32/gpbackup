@@ -62,7 +62,7 @@ gprestore --timestamp=\$TS --backup-dir=/tmp/icw-migr-backup --create-db --with-
 # TODO: see if we can extract this to a standalone script, so this can be kept general for migration testing
 # Expected Errors:
 ##  Resource group option names were changed in GPDB7.  We expect this to throw an error.
-
+cat /home/gpadmin/gpAdminLogs/gprestore_*
 cat /home/gpadmin/gpAdminLogs/gprestore_* | grep -E "ERROR" | grep -Ev "Encountered [0-9]" \
     | grep -Ev "ALTER RESOURCE GROUP" \
     | tee /tmp/error_list.log
