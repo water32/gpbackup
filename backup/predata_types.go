@@ -164,10 +164,10 @@ func PrintCreateCompositeTypeStatement(metadataFile *utils.FileWithByteCount, ob
 
 func printPostCreateCompositeTypeStatement(metadataFile *utils.FileWithByteCount, objToc *toc.TOC, composite CompositeType, typeMetadata ObjectMetadata, tier []uint32) {
 	PrintObjectMetadata(metadataFile, objToc, typeMetadata, composite, "", tier)
-	statements := make([]string, 0)
+	statements := make([]toc.StatementWithType, 0)
 	for _, att := range composite.Attributes {
 		if att.Comment != "" {
-			statements = append(statements, fmt.Sprintf("COMMENT ON COLUMN %s.%s IS %s;", composite.FQN(), att.Name, att.Comment))
+			statements = append(statements, toc.StatementWithType{Statement: fmt.Sprintf("COMMENT ON COLUMN %s.%s IS %s;", composite.FQN(), att.Name, att.Comment), ObjectType: toc.OBJ_TYPE})
 		}
 	}
 	PrintStatements(metadataFile, objToc, composite, statements, tier)

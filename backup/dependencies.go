@@ -7,6 +7,7 @@ import (
 
 	"github.com/greenplum-db/gp-common-go-libs/dbconn"
 	"github.com/greenplum-db/gp-common-go-libs/gplog"
+	"github.com/greenplum-db/gpbackup/options"
 	"github.com/greenplum-db/gpbackup/toc"
 	"github.com/greenplum-db/gpbackup/utils"
 	"github.com/pkg/errors"
@@ -456,7 +457,9 @@ func PrintDependentObjectStatements(metadataFile *utils.FileWithByteCount, objTo
 	}
 
 	//  Process ACLs for left over objects in the metadata map
-	printExtensionFunctionACLs(metadataFile, objToc, metadataMap, funcInfoMap)
+	if !MustGetFlagBool(options.NO_PRIVILEGES) {
+		printExtensionFunctionACLs(metadataFile, objToc, metadataMap, funcInfoMap)
+	}
 }
 
 func MarkViewsDependingOnConstraints(sortableObjs []Sortable, depMap DependencyMap) []View {

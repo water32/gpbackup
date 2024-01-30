@@ -2581,4 +2581,32 @@ LANGUAGE plpgsql NO SQL;`)
 			Expect(string(output)).To(ContainSubstring("Multiple timestamp directories found"))
 		})
 	})
+	Describe("Backup and restore with the --no-privileges flag", func() {
+		It("handles backup and restore of all sections", func() {
+			if useOldBackupVersion {
+				Skip("This test is not needed for old backup versions")
+			}
+			testhelper.AssertQueryRuns(backupConn, `CREATE TABLE public.bar(i int);`)
+			testhelper.AssertQueryRuns(backupConn, `CREATE TABLE public.baz(i int);`)
+			testhelper.AssertQueryRuns(backupConn, `CREATE ROLE temprole;`)
+			testhelper.AssertQueryRuns(backupConn, `ALTER TABLE public.bar OWNER TO temprole`)
+			testhelper.AssertQueryRuns(backupConn, `GRANT SELECT ON public.baz TO temprole`)
+			defer testhelper.AssertQueryRuns(backupConn, "DROP ROLE temprole")
+			defer testhelper.AssertQueryRuns(backupConn, "DROP TABLE public.bar")
+			defer testhelper.AssertQueryRuns(backupConn, "DROP TABLE public.baz")
+
+			timestamp := gpbackup(gpbackupPath, backupHelperPath, "--backup-dir", backupDir, "--no-privileges")
+
+			contents := string(getMetdataFileContents(backupDir, timestamp, "metadata.sql"))
+			Expect(contents).ToNot(ContainSubstring("ALTER SCHEMA public OWNER"))
+			Expect(contents).ToNot(ContainSubstring("REVOKE ALL ON SCHEMA"))
+			Expect(contents).ToNot(ContainSubstring("GRANT ALL ON SCHEMA"))
+			Expect(contents).ToNot(ContainSubstring("GRANT SELECT ON"))
+			Expect(contents).ToNot(ContainSubstring("OWNER TO"))
+
+			gprestore(gprestorePath, restoreHelperPath, timestamp,
+				"--backup-dir", backupDir,
+				"--redirect-db", "restoredb")
+		})
+	})
 })

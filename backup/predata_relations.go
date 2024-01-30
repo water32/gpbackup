@@ -260,20 +260,20 @@ func printAlterColumnStatements(metadataFile *utils.FileWithByteCount, table Tab
  */
 func PrintPostCreateTableStatements(metadataFile *utils.FileWithByteCount, objToc *toc.TOC, table Table, tableMetadata ObjectMetadata, tier []uint32) {
 	PrintObjectMetadata(metadataFile, objToc, tableMetadata, table, "", tier)
-	statements := make([]string, 0)
+	statements := make([]toc.StatementWithType, 0)
 	for _, att := range table.ColumnDefs {
 		if att.Comment != "" {
 			escapedComment := utils.EscapeSingleQuotes(att.Comment)
-			statements = append(statements, fmt.Sprintf("COMMENT ON COLUMN %s.%s IS '%s';", table.FQN(), att.Name, escapedComment))
+			statements = append(statements, toc.StatementWithType{Statement: fmt.Sprintf("COMMENT ON COLUMN %s.%s IS '%s';", table.FQN(), att.Name, escapedComment), ObjectType: toc.OBJ_TABLE})
 		}
-		if att.Privileges.Valid {
+		if !MustGetFlagBool(options.NO_PRIVILEGES) && att.Privileges.Valid {
 			columnMetadata := ObjectMetadata{Privileges: getColumnACL(att.Privileges, att.Kind), Owner: tableMetadata.Owner}
 			columnPrivileges := columnMetadata.GetPrivilegesStatements(table.FQN(), toc.OBJ_COLUMN, att.Name)
-			statements = append(statements, strings.TrimSpace(columnPrivileges))
+			statements = append(statements, toc.StatementWithType{Statement: strings.TrimSpace(columnPrivileges), ObjectType: toc.OBJ_PRIVILEGES})
 		}
 		if att.SecurityLabel != "" {
 			escapedLabel := utils.EscapeSingleQuotes(att.SecurityLabel)
-			statements = append(statements, fmt.Sprintf("SECURITY LABEL FOR %s ON COLUMN %s.%s IS '%s';", att.SecurityLabelProvider, table.FQN(), att.Name, escapedLabel))
+			statements = append(statements, toc.StatementWithType{Statement: fmt.Sprintf("SECURITY LABEL FOR %s ON COLUMN %s.%s IS '%s';", att.SecurityLabelProvider, table.FQN(), att.Name, escapedLabel), ObjectType: toc.OBJ_TABLE})
 		}
 	}
 
@@ -284,27 +284,27 @@ func PrintPostCreateTableStatements(metadataFile *utils.FileWithByteCount, objTo
 			// default values do not need to be written ; index values are handled when the index is created
 			break
 		case "n":
-			statements = append(statements, fmt.Sprintf("ALTER TABLE %s REPLICA IDENTITY NOTHING;", table.FQN()))
+			statements = append(statements, toc.StatementWithType{Statement: fmt.Sprintf("ALTER TABLE %s REPLICA IDENTITY NOTHING;", table.FQN()), ObjectType: toc.OBJ_TABLE})
 		case "f":
-			statements = append(statements, fmt.Sprintf("ALTER TABLE %s REPLICA IDENTITY FULL;", table.FQN()))
+			statements = append(statements, toc.StatementWithType{Statement: fmt.Sprintf("ALTER TABLE %s REPLICA IDENTITY FULL;", table.FQN()), ObjectType: toc.OBJ_TABLE})
 		}
 	}
 
 	for _, alteredPartitionRelation := range table.PartitionAlteredSchemas {
 		statements = append(statements,
-			fmt.Sprintf("ALTER TABLE %s SET SCHEMA %s;",
-				utils.MakeFQN(alteredPartitionRelation.OldSchema, alteredPartitionRelation.Name), alteredPartitionRelation.NewSchema))
+			toc.StatementWithType{Statement: fmt.Sprintf("ALTER TABLE %s SET SCHEMA %s;",
+				utils.MakeFQN(alteredPartitionRelation.OldSchema, alteredPartitionRelation.Name), alteredPartitionRelation.NewSchema), ObjectType: toc.OBJ_TABLE})
 	}
 
 	if connectionPool.Version.AtLeast("7") {
 		attachInfo := table.AttachPartitionInfo
 		if (attachInfo != AttachPartitionInfo{}) {
 			statements = append(statements,
-				fmt.Sprintf("ALTER TABLE ONLY %s ATTACH PARTITION %s %s;", table.Inherits[0], attachInfo.Relname, attachInfo.Expr))
+				toc.StatementWithType{Statement: fmt.Sprintf("ALTER TABLE ONLY %s ATTACH PARTITION %s %s;", table.Inherits[0], attachInfo.Relname, attachInfo.Expr), ObjectType: toc.OBJ_TABLE})
 		}
 
 		if table.ForceRowSecurity {
-			statements = append(statements, fmt.Sprintf("ALTER TABLE ONLY %s FORCE ROW LEVEL SECURITY;", table.FQN()))
+			statements = append(statements, toc.StatementWithType{Statement: fmt.Sprintf("ALTER TABLE ONLY %s FORCE ROW LEVEL SECURITY;", table.FQN()), ObjectType: toc.OBJ_TABLE})
 		}
 	}
 

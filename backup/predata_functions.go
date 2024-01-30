@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	"github.com/greenplum-db/gp-common-go-libs/gplog"
+	"github.com/greenplum-db/gpbackup/options"
 	"github.com/greenplum-db/gpbackup/toc"
 	"github.com/greenplum-db/gpbackup/utils"
 )
@@ -358,20 +359,27 @@ func PrintCreateLanguageStatements(metadataFile *utils.FileWithByteCount, objToc
 		 * the inline and validator functions can be in a different schema and must be schema-qualified.
 		 */
 
+		addPrivileges := !MustGetFlagBool(options.NO_PRIVILEGES)
 		if procLang.Handler != 0 {
 			handlerInfo := funcInfoMap[procLang.Handler]
 			paramsStr += fmt.Sprintf(" HANDLER %s", handlerInfo.QualifiedName)
-			alterStr += fmt.Sprintf("\nALTER FUNCTION %s(%s) OWNER TO %s;", handlerInfo.QualifiedName, handlerInfo.Arguments.String, procLang.Owner)
+			if addPrivileges {
+				alterStr += fmt.Sprintf("\nALTER FUNCTION %s(%s) OWNER TO %s;", handlerInfo.QualifiedName, handlerInfo.Arguments.String, procLang.Owner)
+			}
 		}
 		if procLang.Inline != 0 {
 			inlineInfo := funcInfoMap[procLang.Inline]
 			paramsStr += fmt.Sprintf(" INLINE %s", inlineInfo.QualifiedName)
-			alterStr += fmt.Sprintf("\nALTER FUNCTION %s(%s) OWNER TO %s;", inlineInfo.QualifiedName, inlineInfo.Arguments.String, procLang.Owner)
+			if addPrivileges {
+				alterStr += fmt.Sprintf("\nALTER FUNCTION %s(%s) OWNER TO %s;", inlineInfo.QualifiedName, inlineInfo.Arguments.String, procLang.Owner)
+			}
 		}
 		if procLang.Validator != 0 {
 			validatorInfo := funcInfoMap[procLang.Validator]
 			paramsStr += fmt.Sprintf(" VALIDATOR %s", validatorInfo.QualifiedName)
-			alterStr += fmt.Sprintf("\nALTER FUNCTION %s(%s) OWNER TO %s;", validatorInfo.QualifiedName, validatorInfo.Arguments.String, procLang.Owner)
+			if addPrivileges {
+				alterStr += fmt.Sprintf("\nALTER FUNCTION %s(%s) OWNER TO %s;", validatorInfo.QualifiedName, validatorInfo.Arguments.String, procLang.Owner)
+			}
 		}
 		metadataFile.MustPrintf("%s;", paramsStr)
 

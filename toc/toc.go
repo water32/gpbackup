@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/greenplum-db/gp-common-go-libs/gplog"
@@ -92,6 +93,8 @@ const (
 	OBJ_OPERATOR                  = "OPERATOR"
 	OBJ_OPERATOR_CLASS            = "OPERATOR CLASS"
 	OBJ_OPERATOR_FAMILY           = "OPERATOR FAMILY"
+	OBJ_OWNER                     = "OWNER"
+	OBJ_PRIVILEGES                = "PRIVILEGES"
 	OBJ_PROCEDURE                 = "PROCEDURE"
 	OBJ_PROTOCOL                  = "PROTOCOL"
 	OBJ_RELATION                  = "RELATION"
@@ -234,10 +237,26 @@ func shouldIncludeStatement(entry MetadataEntry, objectSet *utils.FilterSet, sch
 		includeLeafPartition = false
 	}
 
-	shouldIncludeRelation := (relationSet.IsExclude && entry.ObjectType != OBJ_TABLE && entry.ObjectType != OBJ_VIEW && entry.ObjectType != OBJ_MATERIALIZED_VIEW && entry.ObjectType != OBJ_SEQUENCE && entry.ObjectType != OBJ_STATISTICS && entry.ReferenceObject == "") ||
-		((entry.ObjectType == OBJ_TABLE || entry.ObjectType == OBJ_VIEW || entry.ObjectType == OBJ_MATERIALIZED_VIEW || entry.ObjectType == OBJ_SEQUENCE || entry.ObjectType == OBJ_STATISTICS) && relationSet.MatchesFilter(relationFQN) && includeLeafPartition) || // Relations should match the filter
+	relationTypes := []string{OBJ_TABLE, OBJ_VIEW, OBJ_MATERIALIZED_VIEW, OBJ_SEQUENCE, OBJ_STATISTICS}
+	isRelationType := slices.Contains(relationTypes, entry.ObjectType)
+
+	shouldIncludeRelation := (relationSet.IsExclude && !isRelationType && entry.ReferenceObject == "") ||
+		(isRelationType && relationSet.MatchesFilter(relationFQN) && includeLeafPartition) || // Relations should match the filter
 		(entry.ObjectType != OBJ_SEQUENCE_OWNER && entry.ReferenceObject != "" && relationSet.MatchesFilter(entry.ReferenceObject)) || // Include relations that filtered tables depend on
 		(entry.ObjectType == OBJ_SEQUENCE_OWNER && relationSet.MatchesFilter(relationFQN) && relationSet.MatchesFilter(entry.ReferenceObject)) //Include sequence owners if both table and sequence are being restored
+
+	// Only restore an owner or privilege statement if the object it references is also being restored
+	if entry.ObjectType == OBJ_OWNER || entry.ObjectType == OBJ_PRIVILEGES {
+		relationTypeMatchesFilter := false
+		for _, t := range relationTypes {
+			if objectSet.MatchesFilter(t) {
+				relationTypeMatchesFilter = true
+				break
+			}
+		}
+		shouldIncludeSchema = objectSet.MatchesFilter(OBJ_SCHEMA) && schemaSet.MatchesFilter(entry.ReferenceObject)
+		shouldIncludeRelation = relationTypeMatchesFilter && relationSet.MatchesFilter(entry.ReferenceObject)
+	}
 
 	return shouldIncludeObject && shouldIncludeSchema && shouldIncludeRelation
 }
