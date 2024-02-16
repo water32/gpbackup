@@ -27,15 +27,10 @@ var _ = Describe("wrapper tests", func() {
 			result := restore.SetMaxCsvLineLengthQuery(connectionPool)
 			Expect(result).To(Equal(""))
 		})
-		It("sets gp_max_csv_line_length to 1GB when connection version is 5.X and at least 5.11.0", func() {
-			testhelper.SetDBVersion(connectionPool, "5.11.0")
+		It("sets gp_max_csv_line_length to 1GB when connection version is 5.X", func() {
+			testhelper.SetDBVersion(connectionPool, "5.29.12")
 			result := restore.SetMaxCsvLineLengthQuery(connectionPool)
 			Expect(result).To(Equal("SET gp_max_csv_line_length = 1073741824;\n"))
-		})
-		It("sets gp_max_csv_line_length to 4MB when connection version is 5.X and before 5.11.0", func() {
-			testhelper.SetDBVersion(connectionPool, "5.10.999")
-			result := restore.SetMaxCsvLineLengthQuery(connectionPool)
-			Expect(result).To(Equal("SET gp_max_csv_line_length = 4194304;\n"))
 		})
 	})
 	Describe("RestoreSchemas", func() {

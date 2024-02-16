@@ -24,7 +24,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-const MINIMUM_GPDB5_VERSION = "5.1.0"
+const MINIMUM_GPDB5_VERSION = "5.29.0"
 
 /*
  * General helper functions

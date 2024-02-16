@@ -204,11 +204,6 @@ var _ = Describe("backup integration create statement tests", func() {
 			Fail("Could not find some_group")
 		})
 		It("creates a resource group using old format for MemorySpillRatio", func() {
-			// temporarily special case for 5x resource groups #temp5xResGroup
-			if connectionPool.Version.Before("5.20.0") {
-				Skip("Test only applicable to GPDB 5.20 and above")
-			}
-
 			if connectionPool.Version.Before("7") {
 				expectedDefaults := backup.ResourceGroupBefore7{ResourceGroup: backup.ResourceGroup{Oid: 1, Name: "some_group", Concurrency: concurrencyDefault, Cpuset: cpuSetDefault},
 					CPURateLimit: "10", MemoryLimit: "20", MemorySharedQuota: memSharedDefault, MemorySpillRatio: "19", MemoryAuditor: memAuditDefault}

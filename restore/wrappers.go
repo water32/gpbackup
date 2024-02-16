@@ -137,18 +137,10 @@ SET default_with_oids = off;
 }
 
 func SetMaxCsvLineLengthQuery(connectionPool *dbconn.DBConn) string {
-	if connectionPool.Version.AtLeast("6") {
-		return ""
+	if connectionPool.Version.Before("6") {
+		return fmt.Sprintf("SET gp_max_csv_line_length = %d;\n", 1024 * 1024 * 1024)
 	}
-
-	var maxLineLength int
-	if connectionPool.Version.Is("5") && connectionPool.Version.AtLeast("5.11.0") {
-		maxLineLength = 1024 * 1024 * 1024
-	} else {
-		maxLineLength = 4 * 1024 * 1024 // 4MB
-	}
-
-	return fmt.Sprintf("SET gp_max_csv_line_length = %d;\n", maxLineLength)
+	return ""
 }
 
 func InitializeBackupConfig() {

@@ -179,7 +179,7 @@ func PrintCreateResourceGroupStatementsAtLeast7(metadataFile *utils.FileWithByte
 			if !strings.HasPrefix(resGroup.CpuMaxPercent, "-") {
 				/* cpu rate mode */
 				attributes = append(attributes, fmt.Sprintf("CPU_MAX_PERCENT=%s", resGroup.CpuMaxPercent))
-			} else if connectionPool.Version.AtLeast("5.9.0") {
+			} else {
 				/* cpuset mode */
 				attributes = append(attributes, fmt.Sprintf("CPUSET='%s'", resGroup.Cpuset))
 			}
@@ -196,22 +196,6 @@ func PrintCreateResourceGroupStatementsAtLeast7(metadataFile *utils.FileWithByte
 func PrintCreateResourceGroupStatementsBefore7(metadataFile *utils.FileWithByteCount, objToc *toc.TOC, resGroups []ResourceGroupBefore7, resGroupMetadata MetadataMap) {
 	for _, resGroup := range resGroups {
 
-		// temporarily special case for 5x resource groups #temp5xResGroup
-		memorySpillRatio := resGroup.MemorySpillRatio
-
-		if connectionPool.Version.Is("5") {
-			/*
-			 * memory_spill_ratio can be set in absolute value format since 5.20,
-			 * such as '1 MB', it has to be set as a quoted string, otherwise set
-			 * it without quotes.
-			 */
-			if _, err := strconv.Atoi(memorySpillRatio); err != nil {
-				/* memory_spill_ratio is in absolute value format, set it with quotes */
-
-				memorySpillRatio = "'" + memorySpillRatio + "'"
-			}
-		}
-
 		var start uint64
 		section, entry := resGroup.GetMetadataEntry()
 		if resGroup.Name == "default_group" || resGroup.Name == "admin_group" {
@@ -221,7 +205,7 @@ func PrintCreateResourceGroupStatementsBefore7(metadataFile *utils.FileWithByteC
 			}{
 				{"MEMORY_LIMIT", resGroup.MemoryLimit},
 				{"MEMORY_SHARED_QUOTA", resGroup.MemorySharedQuota},
-				{"MEMORY_SPILL_RATIO", memorySpillRatio},
+				{"MEMORY_SPILL_RATIO", resGroup.MemorySpillRatio},
 				{"CONCURRENCY", resGroup.Concurrency},
 			}
 			for _, property := range resGroupList {
@@ -236,7 +220,7 @@ func PrintCreateResourceGroupStatementsBefore7(metadataFile *utils.FileWithByteC
 			if !strings.HasPrefix(resGroup.CPURateLimit, "-") {
 				/* cpu rate mode */
 				metadataFile.MustPrintf("\n\nALTER RESOURCE GROUP %s SET CPU_RATE_LIMIT %s;", resGroup.Name, resGroup.CPURateLimit)
-			} else if connectionPool.Version.AtLeast("5.9.0") {
+			} else {
 				/* cpuset mode */
 				metadataFile.MustPrintf("\n\nALTER RESOURCE GROUP %s SET CPUSET '%s';", resGroup.Name, resGroup.Cpuset)
 			}
@@ -251,7 +235,7 @@ func PrintCreateResourceGroupStatementsBefore7(metadataFile *utils.FileWithByteC
 			if !strings.HasPrefix(resGroup.CPURateLimit, "-") {
 				/* cpu rate mode */
 				attributes = append(attributes, fmt.Sprintf("CPU_RATE_LIMIT=%s", resGroup.CPURateLimit))
-			} else if connectionPool.Version.AtLeast("5.9.0") {
+			} else {
 				/* cpuset mode */
 				attributes = append(attributes, fmt.Sprintf("CPUSET='%s'", resGroup.Cpuset))
 			}
@@ -263,13 +247,13 @@ func PrintCreateResourceGroupStatementsBefore7(metadataFile *utils.FileWithByteC
 			 */
 			if resGroup.MemoryAuditor == "1" {
 				attributes = append(attributes, "MEMORY_AUDITOR=cgroup")
-			} else if connectionPool.Version.AtLeast("5.8.0") {
+			} else {
 				attributes = append(attributes, "MEMORY_AUDITOR=vmtracker")
 			}
 
 			attributes = append(attributes, fmt.Sprintf("MEMORY_LIMIT=%s", resGroup.MemoryLimit))
 			attributes = append(attributes, fmt.Sprintf("MEMORY_SHARED_QUOTA=%s", resGroup.MemorySharedQuota))
-			attributes = append(attributes, fmt.Sprintf("MEMORY_SPILL_RATIO=%s", memorySpillRatio))
+			attributes = append(attributes, fmt.Sprintf("MEMORY_SPILL_RATIO=%s", resGroup.MemorySpillRatio))
 			attributes = append(attributes, fmt.Sprintf("CONCURRENCY=%s", resGroup.Concurrency))
 			metadataFile.MustPrintf("\n\nCREATE RESOURCE GROUP %s WITH (%s);", resGroup.Name, strings.Join(attributes, ", "))
 

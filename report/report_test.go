@@ -65,7 +65,7 @@ var _ = Describe("utils/report tests", func() {
 		config := history.BackupConfig{
 			BackupVersion:   "0.1.0",
 			DatabaseName:    "testdb",
-			DatabaseVersion: "5.0.0 build test",
+			DatabaseVersion: "5.29.12",
 			SegmentCount:    3,
 		}
 		backupReport := &report.Report{}
@@ -97,7 +97,7 @@ data file format: Single Data File Per Segment`,
 			Expect(buffer).To(Say(`Greenplum Database Backup Report
 
 timestamp key:         20170101010101
-gpdb version:          5\.0\.0 build test
+gpdb version:          5\.29\.12
 gpbackup version:      0\.1\.0
 
 database name:         testdb
@@ -127,7 +127,7 @@ types       1000`))
 			Expect(buffer).To(Say(`Greenplum Database Backup Report
 
 timestamp key:         20170101010101
-gpdb version:          5\.0\.0 build test
+gpdb version:          5.29.12
 gpbackup version:      0\.1\.0
 
 database name:         testdb
@@ -159,7 +159,7 @@ types       1000`))
 			Expect(buffer).To(Say(`Greenplum Database Backup Report
 
 timestamp key:         20170101010101
-gpdb version:          5\.0\.0 build test
+gpdb version:          5.29.12
 gpbackup version:      0\.1\.0
 
 database name:         testdb
@@ -223,7 +223,7 @@ incremental backup set:
 		connectionPool := &dbconn.DBConn{
 			DBName: "testdb",
 			Version: dbconn.GPDBVersion{
-				VersionString: "5.0.0 build test",
+				VersionString: "5.29.12",
 			},
 		}
 		BeforeEach(func() {
@@ -248,7 +248,7 @@ incremental backup set:
 			Expect(buffer).To(Say(`Greenplum Database Restore Report
 
 timestamp key:           20170101010101
-gpdb version:            5\.0\.0 build test
+gpdb version:            5.29.12
 gprestore version:       0\.1\.0
 
 database name:           testdb
@@ -269,7 +269,7 @@ restore error:           Cannot access /tmp/backups: Permission denied`))
 			Expect(buffer).To(Say(`Greenplum Database Restore Report
 
 timestamp key:           20170101010101
-gpdb version:            5\.0\.0 build test
+gpdb version:            5.29.12
 gprestore version:       0\.1\.0
 
 database name:           testdb
@@ -289,7 +289,7 @@ restore status:          Success`))
 			Expect(buffer).To(Say(`Greenplum Database Restore Report
 
 timestamp key:           20170101010101
-gpdb version:            5\.0\.0 build test
+gpdb version:            5.29.12
 gprestore version:       0\.1\.0
 
 database name:           testdb
@@ -332,14 +332,14 @@ restore status:          Success but non-fatal errors occurred. See log file .+ 
 			Expect(err).ToNot(HaveOccurred())
 
 			backupConfig := backup.NewBackupConfig("testdb",
-				"5.0.0 build test", "0.1.0",
+				"5.29.12", "0.1.0",
 				"/tmp/plugin.sh", "timestamp1", *opts)
 			structmatcher.ExpectStructsToMatch(history.BackupConfig{
 				BackupVersion:        "0.1.0",
 				Compressed:           true,
 				CompressionType:      "gzip",
 				DatabaseName:         "testdb",
-				DatabaseVersion:      "5.0.0 build test",
+				DatabaseVersion:      "5.29.12",
 				IncludeSchemas:       []string{},
 				IncludeRelations:     []string{"public.foobar"},
 				ExcludeSchemas:       []string{},
@@ -418,21 +418,21 @@ restore status:          Success but non-fatal errors occurred. See log file .+ 
 	Describe("EnsureDatabaseVersionCompatibility", func() {
 		var restoreVersion dbconn.GPDBVersion
 		BeforeEach(func() {
-			semver, _ := semver.Make("5.0.0")
+			semver, _ := semver.Make("6.26.2")
 			restoreVersion = dbconn.GPDBVersion{
-				VersionString: "5.0.0-beta.9+dev.129.g4bd4e41 build dev",
+				VersionString: "6.26.2",
 				SemVer:        semver,
 			}
 		})
 		It("Panics if backup database major version is greater than restore major version", func() {
-			defer testhelper.ShouldPanicWithMessage("Cannot restore from GPDB version 6.0.0-beta.9+dev.129.g4bd4e41 build dev to 5.0.0-beta.9+dev.129.g4bd4e41 build dev due to catalog incompatibilities.")
-			report.EnsureDatabaseVersionCompatibility("6.0.0-beta.9+dev.129.g4bd4e41 build dev", restoreVersion)
+			defer testhelper.ShouldPanicWithMessage("Cannot restore from GPDB version 7.0.0 to 6.26.2 due to catalog incompatibilities.")
+			report.EnsureDatabaseVersionCompatibility("7.0.0", restoreVersion)
 		})
-		It("Does not panic if backup database major version is greater than restore major version", func() {
-			report.EnsureDatabaseVersionCompatibility("4.3.16-beta.9+dev.129.g4bd4e41 build dev", restoreVersion)
+		It("Does not panic if backup database major version is less than restore major version", func() {
+			report.EnsureDatabaseVersionCompatibility("5.29.12", restoreVersion)
 		})
 		It("Does not panic if backup database major version is equal to restore major version", func() {
-			report.EnsureDatabaseVersionCompatibility("5.0.6-beta.9+dev.129.g4bd4e41 build dev", restoreVersion)
+			report.EnsureDatabaseVersionCompatibility("6.26.2", restoreVersion)
 		})
 	})
 
