@@ -265,6 +265,8 @@ func ValidateFlagCombinations(flags *pflag.FlagSet) {
 	options.CheckExclusiveFlags(flags, options.PLUGIN_CONFIG, options.BACKUP_DIR)
 	options.CheckExclusiveFlags(flags, options.TRUNCATE_TABLE, options.METADATA_ONLY, options.INCREMENTAL)
 	options.CheckExclusiveFlags(flags, options.TRUNCATE_TABLE, options.REDIRECT_SCHEMA)
+	options.CheckExclusiveFlags(flags, options.SECTION, options.METADATA_ONLY)
+	options.CheckExclusiveFlags(flags, options.SECTION, options.DATA_ONLY)
 
 	if flags.Changed(options.REDIRECT_SCHEMA) {
 		// Redirect schema not compatible with any exclude flags
