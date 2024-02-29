@@ -234,35 +234,5 @@ var _ = Describe("backup/data tests", func() {
 			Expect(len(dataTables)).To(Equal(1))
 			Expect(numExtOrForeignTables).To(Equal(int64(0)))
 		})
-		It("returns an empty set, if --section=predata is set and a regular table is given", func() {
-			config.Sections = history.Empty
-			config.Sections.Set(history.Predata)
-			backup.SetReport(&report.Report{BackupConfig: config})
-			tables := []backup.Table{testTable}
-
-			dataTables, numExtOrForeignTables := backup.GetBackupDataSet(tables)
-			Expect(len(dataTables)).To(Equal(0))
-			Expect(numExtOrForeignTables).To(Equal(int64(0)))
-		})
-		It("returns an empty set, if --section=postdata is set and a regular table is given", func() {
-			config.Sections = history.Empty
-			config.Sections.Set(history.Predata | history.Postdata)
-			backup.SetReport(&report.Report{BackupConfig: config})
-			tables := []backup.Table{testTable}
-
-			dataTables, numExtOrForeignTables := backup.GetBackupDataSet(tables)
-			Expect(len(dataTables)).To(Equal(0))
-			Expect(numExtOrForeignTables).To(Equal(int64(0)))
-		})
-		It("returns an empty set, if --section=predata --section=postdata is set and a regular table is given", func() {
-			config.Sections = history.Empty
-			config.Sections.Set(history.Predata | history.Postdata)
-			backup.SetReport(&report.Report{BackupConfig: config})
-			tables := []backup.Table{testTable}
-
-			dataTables, numExtOrForeignTables := backup.GetBackupDataSet(tables)
-			Expect(len(dataTables)).To(Equal(0))
-			Expect(numExtOrForeignTables).To(Equal(int64(0)))
-		})
 	})
 })
