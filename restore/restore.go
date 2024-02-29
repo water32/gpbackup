@@ -90,6 +90,9 @@ func DoSetup() {
 		gplog.FatalOnError(err)
 	}
 
+	restoreSections, err := history.NewSections(cmdFlags)
+	gplog.FatalOnError(err)
+
 	// Get restore metadata from plugin
 	if MustGetFlagString(options.PLUGIN_CONFIG) != "" {
 		RecoverMetadataFilesUsingPlugin()
@@ -102,17 +105,21 @@ func DoSetup() {
 	gplog.Info("gpbackup version = %s", backupConfig.BackupVersion)
 	gplog.Info("gprestore version = %s", GetVersion())
 	gplog.Info("Greenplum Database Version = %s", connectionPool.Version.VersionString)
+	gplog.Info("Sections to be processed: %s", restoreSections.ToString())
 
 	BackupConfigurationValidation()
+	err = restoreSections.ValidateRestore(cmdFlags, backupConfig)
+	gplog.FatalOnError(err)
+
 	metadataFilename := globalFPInfo.GetMetadataFilePath()
-	if !backupConfig.DataOnly {
+	if restoreSections.Contains(history.Predata | history.Postdata) {
 		gplog.Verbose("Metadata will be restored from %s", metadataFilename)
 	}
 	unquotedRestoreDatabase := utils.UnquoteIdent(backupConfig.DatabaseName)
 	if MustGetFlagString(options.REDIRECT_DB) != "" {
 		unquotedRestoreDatabase = MustGetFlagString(options.REDIRECT_DB)
 	}
-	ValidateDatabaseExistence(unquotedRestoreDatabase, MustGetFlagBool(options.CREATE_DB), backupConfig.IncludeTableFiltered || backupConfig.DataOnly)
+	ValidateDatabaseExistence(unquotedRestoreDatabase, MustGetFlagBool(options.CREATE_DB), backupConfig.IncludeTableFiltered || restoreSections.Is(history.Data))
 	if MustGetFlagBool(options.WITH_GLOBALS) {
 		restoreGlobal(metadataFilename)
 	} else if MustGetFlagBool(options.CREATE_DB) {
@@ -150,33 +157,32 @@ func DoSetup() {
 
 func DoRestore() {
 	var filteredDataEntries map[string][]toc.CoordinatorDataEntry
+	totalTablesRestored := 0
 	metadataFilename := globalFPInfo.GetMetadataFilePath()
-	isDataOnly := backupConfig.DataOnly || MustGetFlagBool(options.DATA_ONLY)
-	isMetadataOnly := backupConfig.MetadataOnly || MustGetFlagBool(options.METADATA_ONLY)
 	isIncremental := MustGetFlagBool(options.INCREMENTAL)
+	restoreSections := backupConfig.Sections
 
 	if isIncremental {
 		verifyIncrementalState()
 	}
 
-	if !isDataOnly && !isIncremental {
+	if restoreSections.Contains(history.Predata) {
 		restorePredata(metadataFilename)
-	} else if isDataOnly {
+
+	}
+
+	if restoreSections.Contains(history.Data) {
+		if MustGetFlagString(options.PLUGIN_CONFIG) == "" {
+			VerifyBackupFileCountOnSegments()
+		}
 		// The sequence setval commands need to be run during data only restores since
 		// they are arguably the data of the sequence relations and can affect user tables
 		// containing columns that reference those sequence relations.
 		restoreSequenceValues(metadataFilename)
-	}
-
-	totalTablesRestored := 0
-	if !isMetadataOnly {
-		if MustGetFlagString(options.PLUGIN_CONFIG) == "" {
-			VerifyBackupFileCountOnSegments()
-		}
 		totalTablesRestored, filteredDataEntries = restoreData()
 	}
 
-	if !isDataOnly && !isIncremental {
+	if restoreSections.Contains(history.Postdata) {
 		restorePostdata(metadataFilename)
 	}
 
