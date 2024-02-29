@@ -37,6 +37,8 @@ CREATE TABLE foo (
     i integer DEFAULT nextval('myseq1') NOT NULL
 ) DISTRIBUTED BY (i);
 
+CREATE INDEX foo_idx ON foo (i);
+
 CREATE VIEW myview1 AS SELECT * from foo;
 
 --
@@ -70,6 +72,7 @@ CREATE TABLE sales (
           PARTITION dec17 START ('2017-12-01'::date) END ('2018-01-01'::date) WITH (tablename='sales_1_prt_dec17', appendonly=false )
           );
 
+CREATE INDEX sales_idx ON sales (id);
 
 SET search_path = schema2, pg_catalog;
 

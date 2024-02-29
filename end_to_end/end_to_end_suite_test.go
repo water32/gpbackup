@@ -728,12 +728,12 @@ var _ = Describe("backup and restore end to end tests", func() {
 			Expect(len(tocStruct.GlobalEntries)).To(Equal(1))
 			Expect(tocStruct.GlobalEntries[0].ObjectType).To(Equal(toc.OBJ_SESSION_GUC))
 		})
-		It("runs gpbackup with --without-globals and --metadata-only", func() {
+		It("runs gpbackup with --without-globals and --section=predata --section=postdata", func() {
 			skipIfOldBackupVersionBefore("1.18.0")
 			createGlobalObjects(backupConn)
 			defer dropGlobalObjects(backupConn, true)
 
-			timestamp := gpbackup(gpbackupPath, backupHelperPath, "--backup-dir", backupDir, "--without-globals", "--metadata-only")
+			timestamp := gpbackup(gpbackupPath, backupHelperPath, "--backup-dir", backupDir, "--without-globals", "--section", "predata", "--section", "postdata")
 
 			configFileContents := getMetdataFileContents(backupDir, timestamp, "config.yaml")
 			Expect(string(configFileContents)).To(ContainSubstring("withoutglobals: true"))
@@ -814,7 +814,7 @@ var _ = Describe("backup and restore end to end tests", func() {
 				"--timestamp", "20190809230424",
 				"--redirect-db", "restoredb",
 				"--backup-dir", extractDirectory,
-				"--data-only", "--on-error-continue",
+				"--section", "data", "--on-error-continue",
 				"--include-table", "public.corrupt_table")
 			_, err := gprestoreCmd.CombinedOutput()
 			Expect(err).To(HaveOccurred())
@@ -1052,7 +1052,7 @@ var _ = Describe("backup and restore end to end tests", func() {
 			assertDataRestored(restoreConn, schema3TupleCounts)
 			assertRelationsCreatedInSchema(restoreConn, "schema2", 0)
 		})
-		It("runs --redirect-schema with --matadata-only", func() {
+		It("runs --redirect-schema with --section=predata, --section=postdata", func() {
 			skipIfOldBackupVersionBefore("1.17.0")
 			testhelper.AssertQueryRuns(restoreConn,
 				"DROP SCHEMA IF EXISTS schema_to_redirect CASCADE; CREATE SCHEMA \"schema_to_redirect\";")
@@ -1064,12 +1064,12 @@ var _ = Describe("backup and restore end to end tests", func() {
 				"DROP SCHEMA schema_to_test CASCADE")
 			testhelper.AssertQueryRuns(backupConn,
 				"CREATE TABLE schema_to_test.table_metadata_only AS SELECT generate_series(1,10)")
-			timestamp := gpbackup(gpbackupPath, backupHelperPath, "--metadata-only", "--include-schema", "schema_to_test")
+			timestamp := gpbackup(gpbackupPath, backupHelperPath, "--section", "predata", "--section", "postdata", "--include-schema", "schema_to_test")
 			gprestore(gprestorePath, restoreHelperPath, timestamp,
 				"--redirect-db", "restoredb",
 				"--redirect-schema", "schema_to_redirect",
 				"--include-table", "schema_to_test.table_metadata_only",
-				"--metadata-only")
+				"--section=predata", "--section=postdata")
 			assertRelationsCreatedInSchema(restoreConn, "schema_to_redirect", 1)
 			assertDataRestored(restoreConn, map[string]int{"schema_to_redirect.table_metadata_only": 0})
 		})
@@ -1169,7 +1169,7 @@ var _ = Describe("backup and restore end to end tests", func() {
 			gprestore(gprestorePath, restoreHelperPath, timestamp,
 				"--redirect-db", "restoredb",
 				"--include-table", "public.sales",
-				"--truncate-table", "--data-only")
+				"--truncate-table", "--section", "data")
 			assertDataRestored(restoreConn, map[string]int{
 				"public.sales": 13})
 		})
@@ -1193,7 +1193,7 @@ var _ = Describe("backup and restore end to end tests", func() {
 				"--redirect-db", "restoredb",
 				"--backup-dir", backupDir,
 				"--include-table-file", "/tmp/include-tables.txt",
-				"--truncate-table", "--data-only")
+				"--truncate-table", "--section", "data")
 			assertDataRestored(restoreConn, map[string]int{
 				"public.sales": 13})
 
@@ -1214,7 +1214,7 @@ var _ = Describe("backup and restore end to end tests", func() {
 			gprestore(gprestorePath, restoreHelperPath, timestamp,
 				"--redirect-db", "restoredb",
 				"--include-table", "public.sales_1_prt_jan17",
-				"--truncate-table", "--data-only")
+				"--truncate-table", "--section", "data")
 			assertDataRestored(restoreConn, map[string]int{
 				"public.sales": 1, "public.sales_1_prt_jan17": 1})
 		})
@@ -1404,21 +1404,27 @@ var _ = Describe("backup and restore end to end tests", func() {
 				Fail(fmt.Sprintf("%v", err))
 			}
 		})
-		It("runs basic gpbackup and gprestore with metadata and data-only flags", func() {
-			timestamp := gpbackup(gpbackupPath, backupHelperPath,
-				"--metadata-only")
-			timestamp2 := gpbackup(gpbackupPath, backupHelperPath,
-				"--data-only")
-			gprestore(gprestorePath, restoreHelperPath, timestamp,
+		It("runs basic gpbackup and gprestore with section flags", func() {
+			timestampPre := gpbackup(gpbackupPath, backupHelperPath,
+				"--section", "predata")
+			timestampData := gpbackup(gpbackupPath, backupHelperPath,
+				"--section", "data")
+			timestampPost := gpbackup(gpbackupPath, backupHelperPath,
+				"--section", "data")
+
+			gprestore(gprestorePath, restoreHelperPath, timestampPre,
 				"--redirect-db", "restoredb")
 			assertDataRestored(restoreConn, map[string]int{
 				"public.foo": 0, "schema2.foo3": 0})
 			assertRelationsCreated(restoreConn, TOTAL_RELATIONS)
-			gprestore(gprestorePath, restoreHelperPath, timestamp2,
-				"--redirect-db", "restoredb")
 
+			gprestore(gprestorePath, restoreHelperPath, timestampData,
+				"--redirect-db", "restoredb")
 			assertDataRestored(restoreConn, publicSchemaTupleCounts)
 			assertDataRestored(restoreConn, schema2TupleCounts)
+
+			gprestore(gprestorePath, restoreHelperPath, timestampPost,
+				"--redirect-db", "restoredb")
 		})
 		It("runs gpbackup and gprestore with metadata-only backup flag", func() {
 			timestamp := gpbackup(gpbackupPath, backupHelperPath,
@@ -1434,7 +1440,7 @@ var _ = Describe("backup and restore end to end tests", func() {
 			testutils.ExecuteSQLFile(restoreConn, "resources/test_tables_ddl.sql")
 
 			timestamp := gpbackup(gpbackupPath, backupHelperPath,
-				"--data-only")
+				"--section", "data")
 			gprestore(gprestorePath, restoreHelperPath, timestamp,
 				"--redirect-db", "restoredb")
 
@@ -1449,7 +1455,7 @@ var _ = Describe("backup and restore end to end tests", func() {
 			timestamp := gpbackup(gpbackupPath, backupHelperPath)
 			output := gprestore(gprestorePath, restoreHelperPath, timestamp,
 				"--redirect-db", "restoredb",
-				"--data-only")
+				"--section", "data")
 
 			assertDataRestored(restoreConn, publicSchemaTupleCounts)
 			assertDataRestored(restoreConn, schema2TupleCounts)
@@ -2190,7 +2196,7 @@ LANGUAGE plpgsql NO SQL;`)
 						"--timestamp", incrementalTimestamp,
 						"--redirect-db", "restoredb",
 						"--incremental",
-						"--data-only",
+						"--section", "data",
 						"--backup-dir", extractDirectory,
 						"--resize-cluster",
 						"--on-error-continue")
@@ -2546,7 +2552,7 @@ LANGUAGE plpgsql NO SQL;`)
 			Entry("Will correctly handle filtering on child table", "schemaone.measurement", "schemaone.measurement_peaktemp_catchall", "9", "8", "3"),
 		)
 	})
-	Describe("Concurrent backups will only work if given unique backup directories and the flags: metadata-only, backup-dir, and no-history", func() {
+	Describe("Concurrent backups will only work if given unique backup directories and the flags: --section=[predata|postdata], backup-dir, and no-history", func() {
 		var backupDir1 string
 		var backupDir2 string
 		var backupDir3 string
@@ -2563,12 +2569,37 @@ LANGUAGE plpgsql NO SQL;`)
 			os.RemoveAll(backupDir2)
 			os.RemoveAll(backupDir3)
 		})
-		It("backs up successfully with the correct flags", func() {
+		It("backs up successfully with the --section=predata, --no-history, --backup-dir", func() {
 			// --no-history flag was added in 1.28.0
 			skipIfOldBackupVersionBefore("1.28.0")
-			command1 := exec.Command(gpbackupPath, "--dbname", "testdb", "--backup-dir", backupDir1, "--no-history", "--metadata-only")
-			command2 := exec.Command(gpbackupPath, "--dbname", "testdb", "--backup-dir", backupDir2, "--no-history", "--metadata-only")
-			command3 := exec.Command(gpbackupPath, "--dbname", "testdb", "--backup-dir", backupDir3, "--no-history", "--metadata-only")
+			command1 := exec.Command(gpbackupPath, "--dbname", "testdb", "--backup-dir", backupDir1, "--no-history", "--section", "predata")
+			command2 := exec.Command(gpbackupPath, "--dbname", "testdb", "--backup-dir", backupDir2, "--no-history", "--section", "predata")
+			command3 := exec.Command(gpbackupPath, "--dbname", "testdb", "--backup-dir", backupDir3, "--no-history", "--section", "predata")
+			commands := []*exec.Cmd{command1, command2, command3}
+
+			var backWg sync.WaitGroup
+			errchan := make(chan error, len(commands))
+			for _, cmd := range commands {
+				backWg.Add(1)
+				go func(command *exec.Cmd) {
+					defer backWg.Done()
+					_, err := command.CombinedOutput()
+					errchan <- err
+				}(cmd)
+			}
+			backWg.Wait()
+			close(errchan)
+
+			for err := range errchan {
+				Expect(err).ToNot(HaveOccurred())
+			}
+		})
+		It("backs up successfully with the --section=postdata, --no-history, --backup-dir", func() {
+			// --no-history flag was added in 1.28.0
+			skipIfOldBackupVersionBefore("1.28.0")
+			command1 := exec.Command(gpbackupPath, "--dbname", "testdb", "--backup-dir", backupDir1, "--no-history", "--section", "postdata")
+			command2 := exec.Command(gpbackupPath, "--dbname", "testdb", "--backup-dir", backupDir2, "--no-history", "--section", "postdata")
+			command3 := exec.Command(gpbackupPath, "--dbname", "testdb", "--backup-dir", backupDir3, "--no-history", "--section", "postdata")
 			commands := []*exec.Cmd{command1, command2, command3}
 
 			var backWg sync.WaitGroup
