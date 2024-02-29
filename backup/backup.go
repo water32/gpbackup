@@ -194,11 +194,13 @@ func DoBackup() {
 
 	backupSessionGUC(metadataFile)
 
-	isFilteredBackup := backupConfig.IncludeTableFiltered || backupConfig.IncludeSchemaFiltered ||
-		backupConfig.ExcludeTableFiltered || backupConfig.ExcludeSchemaFiltered
+	// XXX: Why do we only check for INCLUDE_RELATION here?
+	isFilteredBackup := len(MustGetFlagStringArray(options.INCLUDE_RELATION)) != 0
 
-	if !isFilteredBackup && !MustGetFlagBool(options.WITHOUT_GLOBALS) {
-		backupGlobals(metadataFile)
+	if !backupSections.Is(history.Data) {
+		if !isFilteredBackup && !MustGetFlagBool(options.WITHOUT_GLOBALS) {
+			backupGlobals(metadataFile)
+		}
 	}
 
 	if backupSections.Contains(history.Predata) {

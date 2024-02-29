@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/greenplum-db/gp-common-go-libs/gplog"
 	"github.com/greenplum-db/gpbackup/options"
 	"github.com/spf13/pflag"
 )
@@ -128,35 +129,33 @@ func (s *Sections) SetBackup(cmdFlags *pflag.FlagSet) error {
 }
 
 func (s *Sections) SetRestore(cmdFlags *pflag.FlagSet, config *BackupConfig) error {
+
 	if config == nil {
 		return fmt.Errorf(("Empty backup config"))
 	}
 
-	 err := s.parseFlags(cmdFlags)
+	configSections := parseConfigSections(config)
+
+	err := s.parseFlags(cmdFlags)
 	if err != nil {
 		return err
 	}
 
-	// If no sections are set, use the sections from the backup config
 	if s.Is(Empty) {
-		if !config.Sections.Is(Empty) {
-			s.Set(config.Sections)
-		} else if config.MetadataOnly {
-			s.Set(Predata | Postdata)
-		} else if config.DataOnly {
-			s.Set(Data)
+	// 1. Restore sections and config sections are both empty. Restore all sections.
+		if configSections.Is(Empty) {
+			gplog.Verbose("Restoring all sections")
+			s.Set(Predata | Data | Postdata)
+			return nil
+		} else {
+	// 2. Restore sections are empty and config sections not empty. Restore sections
+	//    from the backup config.
+			s.Set(*configSections)
+			gplog.Verbose("Restoring sections: [%s]", s.ToString())
+			return nil
 		}
-	}
-	
-	// Ensure that the sections requested are present in the backup config
-	if !config.Sections.Contains(*s) {
-			return fmt.Errorf("Cannot restore: [%s] from backup containing: [%s]",
-			s.ToString(),
-			config.Sections.ToString())
-	}
-
-	// Exclusive flags
-	if !s.Contains(Predata) {
+	// 3. Restore sections not empty and missing predata. Validate exclusive flags.
+	} else if !s.Contains(Predata) {
 		if cmdFlags.Changed(options.CREATE_DB) {
 			return fmt.Errorf("Cannot use --%s without section: predata", options.CREATE_DB)
 		}
@@ -165,10 +164,21 @@ func (s *Sections) SetRestore(cmdFlags *pflag.FlagSet, config *BackupConfig) err
 		}
 	}
 
-	if s.Is(Empty) {
-		s.Set(Predata | Data | Postdata)
+	// 3. Restore sections are not empty and config sections are empty.
+	//    This indicates a full backup taken prior to the sections feature.
+	if configSections.Is(Empty) {
+		gplog.Verbose("Restoring [%s] from backup without section information", s.ToString())
+		return nil
 	}
 
+	// 4. Restore sections and config sections are not empty. Ensure that the sections
+	//    requested are present in the backup config.
+	if !config.Sections.Contains(*s) {
+			return fmt.Errorf("Cannot restore: [%s] from backup containing: [%s]",
+			s.ToString(),
+			config.Sections.ToString())
+	}
+	
 	return nil
 }
 
@@ -192,4 +202,18 @@ func (s *Sections) parseFlags(cmdFlags *pflag.FlagSet) error {
 	}
 
 	return nil
+}
+
+func parseConfigSections(config *BackupConfig) *Sections {
+	sections := NewSections()
+	if !config.Sections.Is(Empty) {
+		sections.Set(config.Sections)
+	} else if config.MetadataOnly {
+		sections.Set(Predata | Postdata)
+	} else if config.DataOnly {
+		sections.Set(Data)
+	} else {
+		sections.Set(Empty)
+	}
+	return sections
 }

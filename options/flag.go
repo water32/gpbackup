@@ -108,7 +108,7 @@ func SetRestoreFlagDefaults(flagSet *pflag.FlagSet) {
 	flagSet.StringArray(INCLUDE_RELATION, []string{}, "Restore only the specified relation(s). --include-table can be specified multiple times.")
 	flagSet.String(INCLUDE_RELATION_FILE, "", "A file containing a list of fully-qualified relation(s) that will be restored")
 	flagSet.Bool(INCREMENTAL, false, "BETA FEATURE: Only restore data for all heap tables and only AO tables that have been modified since the last backup")
-	flagSet.Bool(METADATA_ONLY, false, "Only restore metadata, do not restore data")
+	flagSet.Bool(METADATA_ONLY, false, "DEPRECATED: Only restore metadata, do not restore data")
 	flagSet.Int(JOBS, 1, "Number of parallel connections to use when restoring table data and post-data")
 	flagSet.Bool(ON_ERROR_CONTINUE, false, "Log errors and continue restore, instead of exiting on first error")
 	flagSet.String(PLUGIN_CONFIG, "", "The configuration file to use for a plugin")
