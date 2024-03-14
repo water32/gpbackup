@@ -274,6 +274,16 @@ ALTER DEFAULT PRIVILEGES FOR ROLE somerole REVOKE ALL ON TABLES FROM somerole;
 ALTER DEFAULT PRIVILEGES FOR ROLE somerole GRANT USAGE ON TABLES TO somerole;
 `)
 		})
+		It("prints ALTER DEFAULT PRIVILEGES statement for schema", func() {
+			testutils.SkipIfBefore7(connectionPool)
+			defaultPrivileges := []backup.DefaultPrivileges{{Owner: "testrole", Schema: "myschema", Privileges: privs, ObjectType: "n"}}
+			backup.PrintDefaultPrivilegesStatements(backupfile, tocfile, defaultPrivileges)
+			testhelper.ExpectRegexp(buffer, `
+ALTER DEFAULT PRIVILEGES FOR ROLE somerole REVOKE ALL ON SCHEMAS FROM PUBLIC;
+ALTER DEFAULT PRIVILEGES FOR ROLE somerole REVOKE ALL ON SCHEMAS FROM somerole;
+ALTER DEFAULT PRIVILEGES FOR ROLE somerole GRANT USAGE ON SCHEMAS TO somerole;
+`)
+		})
 		It("prints ALTER DEFAULT PRIVILEGES statement in schema", func() {
 			defaultPrivileges := []backup.DefaultPrivileges{{Owner: "testrole", Schema: "myschema", Privileges: privs, ObjectType: "r"}}
 			backup.PrintDefaultPrivilegesStatements(backupfile, tocfile, defaultPrivileges)

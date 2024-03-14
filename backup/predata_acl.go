@@ -529,6 +529,11 @@ func PrintDefaultPrivilegesStatements(metadataFile *utils.FileWithByteCount, obj
 		case "T":
 			objectType = toc.OBJ_TYPE
 		}
+		// Support for default privileges on schemas was added in GPDB 7
+		if connectionPool.Version.AtLeast("7") && priv.ObjectType == "n" {
+			objectType = toc.OBJ_SCHEMA
+		}
+
 		alterPrefix := fmt.Sprintf("ALTER DEFAULT PRIVILEGES%s%s", roleStr, schemaStr)
 		statements = append(statements, fmt.Sprintf("%s REVOKE ALL ON %sS FROM PUBLIC;", alterPrefix, objectType))
 		if priv.Owner != "" {
