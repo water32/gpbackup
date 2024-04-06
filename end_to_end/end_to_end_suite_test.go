@@ -406,9 +406,17 @@ func saveHistory(myCluster *cluster.Cluster) {
 }
 
 // Parse backup timestamp from gpbackup log string
-func getBackupTimestamp(output string) string {
-	r := regexp.MustCompile(`Backup Timestamp = (\d{14})`)
-	return r.FindStringSubmatch(output)[1]
+func getBackupTimestamp(output string) (string, error) {
+	r, err := regexp.Compile(`Backup Timestamp = (\d{14})`)
+	if err != nil {
+		return "", err
+	}
+	matches := r.FindStringSubmatch(output)
+	if len(matches) < 2 {
+		return "", errors.Errorf("unable to parse backup timestamp")
+	} else {
+		return r.FindStringSubmatch(output)[1], nil
+	}
 }
 
 // Helper function to extract saved backups and check that their permissions are correctly set
